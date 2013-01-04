@@ -1,0 +1,12 @@
+.settings
+html
+.metadata
+.project
+.pydevproject
+latex
+fishdoxy.Doxyfile
+src/build
+src/cython_debug
+*.swp
+*.pyc
+*.pyo
