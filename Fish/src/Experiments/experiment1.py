@@ -5,7 +5,7 @@ import scipy as sp
 import matplotlib as mpl
 
 #Need to get some local imports
-os.chdir("/home/trevor/workspace/Fish/src/")
+os.chdir("../")
 
 
 import main,fish,processing,graphing
