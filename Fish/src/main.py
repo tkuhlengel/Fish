@@ -71,6 +71,46 @@ import string
 import gzip
 
 
+def unpacker(filename, dtype=None, endian=None, sort=True, hdrstring=False):
+    '''
+    Basic Data Loader. Automatically Loads .raw files, .nrrd files and 
+        .nhdr lists, and processes headers.
+    @param filename: a string or list of filenames. If not sorted in order,
+         the filenames will be sorted by default in alphabetical order.
+    @param dtype: The expected data type in the file. .nrrd Headers will 
+        automatically be used 
+    @param endian: Specify the endianness of the data. Little will be assumed
+        if this parameter is None.
+    @param sort: If filename is a list of files, if sort is True, the filenames
+    @return: Tuple containing the header data as a dictionary and a numpy array
+        containing the file data.  The header may be empty for raw files.
+    '''
+    if type(filename)==list or type(filename)==tuple:
+        assert (type(filename[0])==type(str) or type(filename[0])==type(string())),\
+            "Input problem: all items of filename must be strings."
+        header,data=getSerialImages(filename)
+    elif type(filename)==str or type(filename)==type(string()):
+        header,data=processFile(filename)
+        
+    else:
+        raise Exception("Parameter filename must be a string or a list of strings.")
+    
+    #Next, we need the data type that is being used.
+    if dtype is None:
+        if "dtype" in header:
+            dtype=header["dtype"]
+        else:
+            dtype="float32"
+    
+    #Convert the raw data into a numpy 
+    npd=unpacker3(data, dtype=dtype)
+    if "dsize" in header:
+        shape=header["dsize"]
+        print("Dsize = {}".format(shape))
+        npd=npd.reshape([i for i in shape].reverse())
+    if hdrstring:
+        return header,npd, None
+    return header,npd
 
 def loadFile(pathname, mode='rb', buffersize=(1024*1024*64)):
     '''
@@ -217,7 +257,7 @@ def getDimFromFile(filname):
     Attempts to get the dimensions from the filename.  
     
     Usually only needed for raw files, and requires that x,y,and z dimensions are included in the file name
-    Format for extraction *_x[0-9]
+    Format for extraction *_x[0-9]+_
     '''
     x=re.findall(r"\_[xX]([0-9]+)\_", filname, re.IGNORECASE)
     y=re.findall(r"\_[yY]([0-9]+)\_", filname, re.IGNORECASE)
@@ -302,46 +342,7 @@ def getSerialImages(imagefilenames, sort=True, ext=None):
     
     return hdr, "".join(data)
 
-def unpacker(filename, dtype=None, endian=None, sort=True, hdrstring=False):
-    '''
-    Basic Data Loader. Automatically Loads .raw files, .nrrd files and 
-        .nhdr lists, and processes headers.
-    @param filename: a string or list of filenames. If not sorted in order,
-         the filenames will be sorted by default in alphabetical order.
-    @param dtype: The expected data type in the file. .nrrd Headers will 
-        automatically be used 
-    @param endian: Specify the endianness of the data. Little will be assumed
-        if this parameter is None.
-    @param sort: If filename is a list of files, if sort is True, the filenames
-    @return: Tuple containing the header data as a dictionary and a numpy array
-        containing the file data.  The header may be empty for raw files.
-    '''
-    if type(filename)==list or type(filename)==tuple:
-        assert (type(filename[0])==type(str) or type(filename[0])==type(string())),\
-            "Input problem: all items of filename must be strings."
-        header,data=getSerialImages(filename)
-    elif type(filename)==str or type(filename)==type(string()):
-        header,data=processFile(filename)
-        
-    else:
-        raise Exception("Parameter filename must be a string or a list of strings.")
-    
-    #Next, we need the data type that is being used.
-    if dtype is None:
-        if "dtype" in header:
-            dtype=header["dtype"]
-        else:
-            dtype="float32"
-    
-    #Convert the raw data into a numpy 
-    npd=unpacker3(data, dtype=dtype)
-    if "dsize" in header:
-        shape=header["dsize"]
-        print("Dsize = {}".format(shape))
-        npd=npd.reshape([i for i in shape].reverse())
-    if hdrstring:
-        return header,npd, None
-    return header,npd
+
 
 def unpacker2(binarystring, endian="<",  datatype="f", offset=None):
     '''

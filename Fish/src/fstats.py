@@ -7,6 +7,7 @@
 import numpy as np
 from scipy import stats
 
+
 ## \brief Calculates the mode of an array as a left-sided value of a bin count
 # \param[in] nparray A numpy array of any shape or structure
 # \param[in] bincount Integer or list define the number of bins to use in the
@@ -48,7 +49,7 @@ def histogramming(volume, sqSize=10, bins=10)
 			for xslice in range(0, layer.shape[1],sqSize):
 				square=layer[yslice:yslice+sqSize,xslice:xslice+sqSize]
 				#stats.histogram(square, numbins=bins
-				hist,bin_edges=numpy.histogram(square, bins=bins, density=True)
+				hist,bin_edges=np.histogram(square, bins=bins, density=True)
 				hists.append(hist)
 				binEdges.append(bin_edges)
 				results.append(np.column_stack(hist, bin_edges))
