@@ -85,31 +85,45 @@ def unpacker(filename, dtype=None, endian=None, sort=True, hdrstring=False):
     @return: Tuple containing the header data as a dictionary and a numpy array
         containing the file data.  The header may be empty for raw files.
     '''
-    if type(filename)==list or type(filename)==tuple:
-        assert (type(filename[0])==type(str) or type(filename[0])==type(string())),\
-            "Input problem: all items of filename must be strings."
-        header,data=getSerialImages(filename)
-    elif type(filename)==str or type(filename)==type(string()):
-        header,data=processFile(filename)
-        
-    else:
-        raise Exception("Parameter filename must be a string or a list of strings.")
-    
-    #Next, we need the data type that is being used.
-    if dtype is None:
-        if "dtype" in header:
-            dtype=header["dtype"]
+    path=os.getcwd()
+    newpath=os.path.dirname(filename)
+    print(newpath)
+    os.chdir(newpath)
+    try:
+            
+        if type(filename)==list or type(filename)==tuple:
+            assert (type(filename[0])==type(str) or type(filename[0])==type(string())),\
+                "Input problem: all items of filename must be strings."
+            header,data=getSerialImages(filename)
+        elif type(filename)==str or type(filename)==type(string()):
+            header,data=processFile(filename)
+            
         else:
-            dtype="float32"
-    
-    #Convert the raw data into a numpy 
-    npd=unpacker3(data, dtype=dtype)
-    if "dsize" in header:
-        shape=header["dsize"]
-        print("Dsize = {}".format(shape))
-        npd=npd.reshape([i for i in shape].reverse())
-    if hdrstring:
-        return header,npd, None
+            raise Exception("Parameter filename must be a string or a list of strings.")
+        
+        #Next, we need the data type that is being used.
+        if dtype is None:
+            if "dtype" in header:
+                dtype=header["dtype"]
+            else:
+                dtype="float32"
+        
+        #Convert the raw data into a numpy 
+        npd=unpacker3(data, dtype=dtype)
+        if "dsize" in header:
+            shape=header["dsize"]
+            print("Dsize = {}".format(shape))
+            print("Size = {}".format(npd.shape))
+            #npd=npd.reshape([i for i in shape[::-1]])
+            npd=npd.reshape([i for i in shape].reverse())
+            print(npd.shape)
+        if hdrstring:
+            return header,npd, None
+    #except Exception as exc:
+    #    print("Error Occurred")
+    #    raise exc
+    finally:
+        os.chdir(path)
     return header,npd
 
 def loadFile(pathname, mode='rb', buffersize=(1024*1024*64)):
@@ -123,7 +137,8 @@ def loadFile(pathname, mode='rb', buffersize=(1024*1024*64)):
         data=gz.read()
         fobj.close()
     else:
-        fobj=open(pathname, mode,buffersize);
+
+        fobj=open(os.path.abspath(pathname), mode);
         data=fobj.read();
         fobj.close();
     
@@ -213,12 +228,19 @@ def processNhdrHeader(header):
     #Split each line out
     hdrlines=re.split(r"\n", header)
     #Split each line in two parts
+    counter=0
     for line in hdrlines[1::]:
-        if line.startswith("#"):
+        if line.startswith("#") or len(line)==0:
             continue
         x=re.split(r": ", line)
         #print(x)
-        hparts[x[0]]=x[1]
+        #print(hparts)
+        counter+=1
+        try:
+            hparts[x[0]]=x[1]
+        except:
+            print("Could not load line {}, skipping".format(counter))
+            print(x)
     if "sizes" in hparts:
         dsize=hparts["sizes"].split(" ")
         dsize2=[string.atoi(i) for i in dsize] #Convert the string to an integer
@@ -300,7 +322,7 @@ def processFile(filename, ext=None):
     raw=f.read()
     #If it is a header file, we save the dictionary and the 
     if nhdr: #NHDR format.
-        rawheader=raw
+        #rawheader=raw
         header,data=processNhdr(raw)
         
         
