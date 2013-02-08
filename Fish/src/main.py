@@ -114,8 +114,8 @@ def unpacker(filename, dtype=None, endian=None, sort=True, hdrstring=False):
             shape=header["dsize"]
             print("Dsize = {}".format(shape))
             print("Size = {}".format(npd.shape))
-            #npd=npd.reshape([i for i in shape[::-1]])
-            npd=npd.reshape([i for i in shape].reverse())
+            npd=npd.reshape([i for i in shape[::-1]])
+            #npd=npd.reshape([i for i in shape].reverse())
             print(npd.shape)
         if hdrstring:
             return header,npd, None
@@ -217,12 +217,12 @@ def splitNrrdData(raw):
     return rawhdr,hdrparts,data
 
 def processNhdrHeader(header):
-    '''
-    Splits out the header components into a dictionary that can be used by other parts of the program
+    """ 
+    @brief Splits out the header components into a dictionary that can be used by other parts of the program
     
-    header should be a raw string containing only the header information from a nrrd, or the
-        entirety of an NHDR file.
-    '''
+    @param header a raw string containing only the header information from a nrrd, or the
+      entirety of an NHDR file.
+    """
     assert len(header)<1000, "There is probably an error in reading the file. Maybe there is no header?"
     hparts=dict()
     #Split each line out
@@ -262,6 +262,8 @@ def processNhdrHeader(header):
             out="float64"
         elif "unsigned short" in x:
             out="uint16"
+        elif "short" in x:
+            out="int16"
         else:
             print("Unknown raw type encountered, assuming float32")
             print(header)
