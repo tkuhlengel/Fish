@@ -1,0 +1,7 @@
+bin
+.metadata
+Debug
+src/CMakeFiles
+src/ITKIOFactoryRegistration
+cmake*
+.settings
