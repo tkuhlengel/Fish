@@ -61,6 +61,7 @@ complex128   Complex number, represented by two 64-bit floats (real and imaginar
 '''
 
 import os 
+import os.path
 import sys
 import struct, math
 import numpy as np
@@ -422,6 +423,19 @@ def packer(array, endian="<", datatype="f"):
     bindata=struct.pack(endian+datatype*siz, *((array.flatten()).tolist()))
     return bindata
 
+def writeVolumeToFile(npdata, basename, resolution, outputfiledir="/scratch/", fill_label=""):
+    """
+    \brief Writes the volume to file, automatically naming and storing in a location.
+    """
+
+    sh=npdata.shape
+    sh=[i for i in sh[::-1]]
+    #outputfiledir="/scratch/"
+    outputfilename="{basename}_x{}_y{}_z{}_{fill}_{res}um.raw".format(sh[0],sh[1],sh[2],npdata.dtype,basename=basename, res=resolution, fill=fill_label)
+    print(outputfilename)
+    output=os.path.join(outputfiledir, outputfilename)
+    with open(output,mode='wb') as f:
+        f.write(npdata.tostring())
     
 def nonzero_normalize(arraydata, maxvalue=1.0, minvalue=None):
     '''

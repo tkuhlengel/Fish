@@ -15,15 +15,16 @@ int main(int argc, char *argv[]){
 
   typedef itk::ImageIOBase::IOComponentType ScalarPixelType;
 
-  itk::ImageIOBase::Pointer imageIO =
-        itk::ImageIOFactory::CreateImageIO(
-            inputFilename.c_str(), itk::ImageIOFactory::ReadMode);
+  itk::ImageIOBase::Pointer imageIO = \
+        itk::ImageIOFactory::CreateImageIO(inputFilename.c_str(), itk::ImageIOFactory::ReadMode);
 
   imageIO->SetFileName(inputFilename);
   imageIO->ReadImageInformation();
 
   //This is where PIXEL COMPONENT TYPE is declared
   const ScalarPixelType pixelType = imageIO->GetComponentType();
+
+
   std::cout << "Pixel Type is " << imageIO->GetComponentTypeAsString(pixelType) // 'double'
             << std::endl;
   const size_t numDimensions =  imageIO->GetNumberOfDimensions();
@@ -32,6 +33,8 @@ int main(int argc, char *argv[]){
   std::cout << "component size: " << imageIO->GetComponentSize() << std::endl; // '8'
   std::cout << "pixel type (string): " << imageIO->GetPixelTypeAsString(imageIO->GetPixelType()) << std::endl; // 'vector'
   std::cout << "pixel type: " << imageIO->GetPixelType() << std::endl; // '5'
+
+  typedef itk::Image<pixelType, 3> ImageType;
 
   /*
   switch (imageIO->GetPixelType())

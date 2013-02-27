@@ -33,7 +33,7 @@
  *
  */
 template<typename TImageType>
-static typename TImageType::Pointer*   loadUnknownImageType(std::string * inputFilename);
+static int loadUnknownImageType(std::string *inputFilename,typename TImageType::Pointer image);
 
 
 template<typename TImageType>

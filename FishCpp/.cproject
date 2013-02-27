@@ -24,8 +24,9 @@
 								<option id="gnu.cpp.compiler.exe.debug.option.optimization.level.1801675931" name="Optimization Level" superClass="gnu.cpp.compiler.exe.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.exe.debug.option.debugging.level.1649973112" name="Debug Level" superClass="gnu.cpp.compiler.exe.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.1608442740" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="/usr/include/ITK-4.2"/>
+									<listOptionValue builtIn="false" value="/usr/include/ITK-4.3"/>
 								</option>
+								<option id="gnu.cpp.compiler.option.other.verbose.444631928" superClass="gnu.cpp.compiler.option.other.verbose" value="true" valueType="boolean"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1722637449" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.1439213971" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.debug">
@@ -34,6 +35,7 @@
 								<option id="gnu.c.compiler.option.include.paths.1784854274" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="/usr/include/ITK-4.2"/>
 								</option>
+								<option id="gnu.c.compiler.option.misc.verbose.1462059631" superClass="gnu.c.compiler.option.misc.verbose" value="true" valueType="boolean"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.2011117765" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.exe.debug.1967224564" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.exe.debug"/>
@@ -126,21 +128,6 @@
 			<resource resourceType="PROJECT" workspacePath="/BinaryParsers"/>
 		</configuration>
 	</storageModule>
-	<storageModule moduleId="scannerConfiguration">
-		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.1846850433;cdt.managedbuild.config.gnu.exe.debug.1846850433.;cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.1725584198;cdt.managedbuild.tool.gnu.cpp.compiler.input.1722637449">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.858998965;cdt.managedbuild.config.gnu.exe.release.858998965.;cdt.managedbuild.tool.gnu.c.compiler.exe.release.37121361;cdt.managedbuild.tool.gnu.c.compiler.input.2054990319">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.1846850433;cdt.managedbuild.config.gnu.exe.debug.1846850433.;cdt.managedbuild.tool.gnu.c.compiler.exe.debug.1439213971;cdt.managedbuild.tool.gnu.c.compiler.input.2011117765">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.858998965;cdt.managedbuild.config.gnu.exe.release.858998965.;cdt.managedbuild.tool.gnu.cpp.compiler.exe.release.1604828990;cdt.managedbuild.tool.gnu.cpp.compiler.input.223249783">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets">
 		<buildTargets>
 			<target name="FishCpp" path="src" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
@@ -152,5 +139,20 @@
 				<runAllBuilders>true</runAllBuilders>
 			</target>
 		</buildTargets>
+	</storageModule>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.858998965;cdt.managedbuild.config.gnu.exe.release.858998965.;cdt.managedbuild.tool.gnu.cpp.compiler.exe.release.1604828990;cdt.managedbuild.tool.gnu.cpp.compiler.input.223249783">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.1846850433;cdt.managedbuild.config.gnu.exe.debug.1846850433.;cdt.managedbuild.tool.gnu.c.compiler.exe.debug.1439213971;cdt.managedbuild.tool.gnu.c.compiler.input.2011117765">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.858998965;cdt.managedbuild.config.gnu.exe.release.858998965.;cdt.managedbuild.tool.gnu.c.compiler.exe.release.37121361;cdt.managedbuild.tool.gnu.c.compiler.input.2054990319">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.1846850433;cdt.managedbuild.config.gnu.exe.debug.1846850433.;cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.1725584198;cdt.managedbuild.tool.gnu.cpp.compiler.input.1722637449">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
 	</storageModule>
 </cproject>

@@ -7,7 +7,10 @@
 #include "load.h"
 
 template<typename TImageType>
-static typename TImageType::Pointer* loadUnknownImageType(std::string *inputFilename){
+static int loadUnknownImageType(std::string *inputFilename,typename TImageType::Pointer image){
+
+	itk::ImageIOBase::Pointer imageIO = \
+      itk::ImageIOFactory::CreateImageIO(inputFilename->c_str(), itk::ImageIOFactory::ReadMode);
 
 
 
@@ -34,7 +37,7 @@ static typename TImageType::Pointer* loadUnknownImageType(std::string *inputFile
 	/*
 	switch (imageIO->GetPixelType())
 	{
-		case itk::ImageIOBase::COVARIANTVECTOR:
+		case itk::ImageIOBase:::
 			typedef itk::Image<itk::ImageIOBase::IOComponentType,3> ImageType;
 
 			ImageType::Pointer image = ImageType::New();
@@ -70,6 +73,7 @@ void ReadFile(std::string filename, typename TImageType::Pointer image)
 	image->Graft(reader->GetOutput());
 }
 
+/*
 itk::Image::Pointer loadNrrdFile(std::string *inputFilename){
 	typedef itk::ImageIOBase::IOComponentType ScalarPixelType;
 
@@ -77,3 +81,4 @@ itk::Image::Pointer loadNrrdFile(std::string *inputFilename){
 }
 
 
+*/

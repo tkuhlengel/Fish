@@ -4,7 +4,7 @@
 #Created on Oct 17, 2012
 #
 #@author: Trevor Kuhlengel
-
+import sys
 import numpy as np
 import matplotlib as mpl
 #import numba
@@ -443,8 +443,17 @@ def removeGreatest(data, count=None, fraction=.0001, mode="max", replacewith=np.
         np.put(flat, itera, replacewith(flat))
     return flat.reshape(data.shape)
 
-def findNthGreatestValue(data, count=None, fraction=.0001, sort_array=None):
 
+def findNthGreatestValue(data, count=None, fraction=.0001, sort_array=None):
+    """
+    @brief finds the value at the counted distance from the maximum value
+    of the array.  pseudo-sorts the array and picks the value a distance
+    from the top.  
+    
+    @param fraction The fraction of the dataset that should be above the value
+    @param count    The number of elements that should be greater than the returned value.
+    """
+    
     #make a copy of the array in flattened form.
     #flat=data.flatten()
 
@@ -527,8 +536,7 @@ def linewise(image, threshold=0.5):
 #    for bo in big_objects:
 #        big_object_image |= label_image == bo
 #    return big_object_image
-def apply_volume_mask(volume, mask):
-    np.where(mask)
+
 
 
 
