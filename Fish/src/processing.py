@@ -679,7 +679,7 @@ def get_coordinates_py(image, maxdepth=0, depth=0):
             sublist.append([i, get_coordinates_py(image[i], maxdepth=maxdepth, depth=depth + 1)])
     return right_join_py(sublist)
 """
-def right_join_py(nestedList):
+def right_join(nestedList):
     result = []  # np.array((100,3), dtype="float32")
     #define the columns
     #np.ndarray c1, c2
@@ -738,7 +738,7 @@ def test():
     
     #Coordinate testing
     boolean_data=npdata>18783.5193537
-    print(get_coordinates_py(boolean_data))
+    print(get_coordinates(boolean_data))
     
 
 if __name__ == '__main__':
