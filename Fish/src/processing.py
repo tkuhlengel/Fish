@@ -348,6 +348,24 @@ def hough_lines(d2image, d2_iscanny=False, pixel_step_size=1.0, angle_samples=18
     return argarray,accum
 def _update_accumulator(accumulator, additions_np, theta_bins, ro_step,ro_bins):
     pass
+
+        
+        
+    
+        
+def get_coords(data, coord_dtype="uint16"):
+    '''
+    Method to get coordinates of true values in an array.  Uses numpy.indices 
+    to generate index spaces.  Not very memory efficient, but should be very fast.
+    '''
+    indexes=np.indices(data.shape, coord_dtype)
+    result=[]
+    #print(data.dtype)
+    data_bool=np.bool8(data)
+    for index_axis in indexes:
+        result.append(index_axis[data_bool[:]].flat)
+    return np.column_stack(result)
+"""
 def get_coordinates(image, maxdepth=None, depth=0):
     '''
     Get a list of coordinates indicating trues image mask down to a coordinate list in n dimensions.
@@ -366,24 +384,9 @@ def get_coordinates(image, maxdepth=None, depth=0):
     elif maxdepth > depth:
         sublist = []
         for i in range(image.shape[0]):
-            sublist.append([i, get_coordinates(image[i], maxdepth=maxdepth, depth=depth + 1)])
-        
-        
-    
-        
-def get_coords(data, coord_dtype="uint16"):
-    '''
-    Method to get coordinates of true values in an array.  Uses numpy.indices 
-    to generate index spaces.  Not very memory efficient, but should be very fast.
-    '''
-    indexes=np.indices(data.shape, coord_dtype)
-    result=[]
-    #print(data.dtype)
-    data_bool=np.bool8(data)
-    for index_axis in indexes:
-        result.append(index_axis[data_bool[:]].flat)
-    return np.column_stack(result)
-        
+            sublist.append([i, get_coordinates(image[i], maxdepth=maxdepth, depth=depth + 1)])        
+    return right_join(sublist)
+
 def right_join(nestedList):
     result = []  # np.array((100,3), dtype="float32")
     for i in nestedList:
@@ -399,7 +402,7 @@ def right_join(nestedList):
         c1[:] = i[0]
         result.append(np.column_stack((c1, c2)))
     return np.concatenate(result)
-                      
+"""                      
         
         
 def canny_edge_filter(volume):
@@ -622,7 +625,7 @@ def linewise(image, threshold=0.5):
 #    for bo in big_objects:
 #        big_object_image |= label_image == bo
 #    return big_object_image
-
+x="""
 def right_join_py(nestedList, dtype="float32"):
     result = []  # np.array((100,3), dtype="float32")
     #define the columns
@@ -675,7 +678,47 @@ def get_coordinates_py(image, maxdepth=0, depth=0):
         for i in range(image.shape[0]):
             sublist.append([i, get_coordinates_py(image[i], maxdepth=maxdepth, depth=depth + 1)])
     return right_join_py(sublist)
+"""
+def right_join_py(nestedList):
+    result = []  # np.array((100,3), dtype="float32")
+    #define the columns
+    #np.ndarray c1, c2
+    for listi in nestedList:
+        try:
+            #if type(listi[1]) == list or type(listi[1][1]) == np.ndarray:
+            if type(listi[1][1])==list or type(listi[1][1]) == np.ndarray:
+                listi[1] = right_join(listi[1])
+            #elif type(listi[1]) == np.ndarray:
+            #    listi[1] = right_join(listi[1])
+        except Exception as exc:
+            #print(exc)
+            pass
+            
+        c2 = np.asarray(listi[1], dtype="float32")
+        c1 = np.zeros((c2.shape[0],), dtype="float32")
+        c1[:] = listi[0]
+        result.append(np.column_stack((c1, c2)))
+    return np.concatenate(result)
 
+def get_coordinates(image, maxdepth=0, depth=0):
+    '''
+    Get a list of coordinates indicating trues image mask down to a coordinate list in n dimensions.
+    Recursively stacks data and then right joins it.  Should be very memory efficient.
+    '''   
+    if maxdepth is 0:
+        #print(image.shape)
+        maxdepth = image.ndim
+    if image.ndim == 1:
+        sublist = []
+        for i in range(len(image)):
+            if image[i]:
+                sublist.append(i)
+        return sublist
+    elif maxdepth > depth:
+        sublist = []
+        for i in range(image.shape[0]):
+            sublist.append([i, get_coordinates(image[i], maxdepth=maxdepth, depth=depth + 1)])
+    return right_join(sublist)    
 
 def test():
     # print("Test not yet written, ending program")
