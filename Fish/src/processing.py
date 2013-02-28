@@ -365,45 +365,6 @@ def get_coords(data, coord_dtype="uint16"):
     for index_axis in indexes:
         result.append(index_axis[data_bool[:]].flat)
     return np.column_stack(result)
-"""
-def get_coordinates(image, maxdepth=None, depth=0):
-    '''
-    Get a list of coordinates indicating trues image mask down to a coordinate list in n dimensions.
-    Recursively stacks data and then right joins it.  Should be very memory efficient.
-    '''   
-    if maxdepth is None:
-        #print(image.shape)
-        maxdepth = len(image.shape)
-    #if image.ndim == 1:
-    if len(image.shape)==1:
-        sublist = []
-        for i in range(len(image)):
-            if image[i]:
-                sublist.append(i)
-        return sublist
-    elif maxdepth > depth:
-        sublist = []
-        for i in range(image.shape[0]):
-            sublist.append([i, get_coordinates(image[i], maxdepth=maxdepth, depth=depth + 1)])        
-    return right_join(sublist)
-
-def right_join(nestedList):
-    result = []  # np.array((100,3), dtype="float32")
-    for i in nestedList:
-        try:
-            if type(i[1][1]) == list or type(i[1][1]) == np.ndarray:
-                i[1] = right_join(i[1])
-        except Exception as exc:
-            #print(exc)
-            pass
-            
-        c2 = np.asarray(i[1], dtype="float32")
-        c1 = np.zeros((c2.shape[0],), dtype="float32")
-        c1[:] = i[0]
-        result.append(np.column_stack((c1, c2)))
-    return np.concatenate(result)
-"""                      
-        
         
 def canny_edge_filter(volume):
     # Step 1: Gaussian convolution with 5x5x5
