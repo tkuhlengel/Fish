@@ -628,24 +628,30 @@ def right_join_py(nestedList, dtype="float32"):
     #define the columns
     #np.ndarray c1, c2
     for i in range(len(nestedList)):
-        #try:
-        if type(nestedList[i][1]) == np.ndarray:
-            if type(nestedList[i][1][1])==list or type(nestedList[i][1][1]) == np.ndarray:
+        if len(nestedList[i][1])==0:
+            continue
+        try:
+            if type(nestedList[i][1][1]) == list :
+                #if len(nestedList[i][1])>0:
                 nestedList[i][1] = right_join_py(nestedList[i][1])
-        elif type(nestedList[i][1]) == list:
-            if type(nestedList[i][1][1])==list or type(nestedList[i][1][1]) == np.ndarray:
-                nestedList[i][1] = right_join_py(nestedList[i][1])
+            #elif type(nestedList[i][1]) == list:
+            #   if type(nestedList[i][1][1])==list or type(nestedList[i][1][1]) == np.ndarray:
+            #        nestedList[i][1] = right_join_py(nestedList[i][1])
         #elif type(nestedList[i][1]) == np.ndarray:
         #    nestedList[i][1] = right_join(nestedList[i][1])
-        #except Exception as exc:
+        except Exception as exc:
             #print(exc)
-            #pass
-            
-        c2 = np.asarray(nestedList[i][1], dtype=dtype)
-        c1 = np.zeros((c2.shape[0],), dtype="float32")
-        c1[:] = nestedList[i][0]
-        result.append(np.column_stack((c1, c2)))
-    return np.concatenate(result)
+            pass
+        if len(nestedList[i]) > 0:
+     
+            c2 = np.asarray(nestedList[i][1], dtype=dtype)
+            c1 = np.zeros((c2.shape[0],), dtype=dtype)
+            c1[:] = nestedList[i][0]
+            result.append(np.column_stack((c1, c2)))
+    if len(result)>1:
+        result=np.concatenate(result)
+        
+    return result
 
 def get_coordinates_py(image, maxdepth=0, depth=0):
     '''
@@ -663,7 +669,7 @@ def get_coordinates_py(image, maxdepth=0, depth=0):
         for i in range(len(image)):
             if image[i]:
                 sublist.append(i)
-        return np.asarray(sublist,dtype="int32")
+        return sublist
     elif maxdepth > depth:
         sublist = []
         for i in range(image.shape[0]):
