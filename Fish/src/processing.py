@@ -1,49 +1,53 @@
 #!/usr/bin/python3
 
-# # @package processing
+## \package processing
 # Created on Oct 17, 2012
 #
-# @author: Trevor Kuhlengel
-import sys
+# \author: Trevor Kuhlengel
+
+#import sys
+import itertools as it
+
 import numpy as np
-import matplotlib as mpl
-# import numba
 import scipy as sp
-from scipy.ndimage.morphology import *
-import graphing
-import math  # Used for NaN checking in autothreshold
-import itktest
 from scipy import ndimage
+#from scipy.ndimage.morphology import *
+import matplotlib as mpl
+
+
+
+
+import graphing
+import itktest
+
 from numpy.core.defchararray import count
 
-# #   @brief: Method that isolates a fish into a smaller volume.  Can use different
+##   \brief: Method that isolates a fish into a smaller volume.  Can use different
 #    difference detections to find the edge of the signal from the noise
 #    
-#    @param[in] nparray3D: 3 dimensional Iterator object returning 2D slices of the 3D volume 
-#    @param[in] mode: String denoting the statistical calculation to use to
+#    \param[in] nparray3D 3 dimensional Iterator object returning 2D slices of the 3D volume 
+#    \param[in] mode String denoting the statistical calculation to use to
 #         differentiate fish from non fish.
-#    Currently supported modes:
+#    Currently supported modes
 #        "variance" or "var"- Variance of a 2D slice. Default option.
 #        "stdev" - Difference in standard deviation
 #        "absolute" - Absolute difference between minimum and maximum in a slide:
 #            Advantage: Very sensitive to single voxel changes
 #            Disadvantage: Very easy to fool if the image has high value noise.
 #        "median" - Median value of a given slice.
-#    @param[in] fractional_diff: The difference of the mode from the previous slide that
+#    \param[in] fractional_diff The difference of the mode from the previous slide that
 #        defines the threshold value.        
-#    @param[in] step: Number of slices to step for each difference check.
+#    \param[in] step Number of slices to step for each difference check.
 #        Good to speed up processing of high density array.
 #        Increasing this number decreases precision.
-#    @param[in] compareto: number of slices before or ahead to compare the difference to.
+#    \param[in] compareto number of slices before or ahead to compare the difference to.
 #        positive values are lookahead, negative are look behind.
-#    @param[in]
 #       
-#    @note Advantages of this method:
+#    \note Advantages of this method:
 #        Trims away noise from images based on 
 #    Drawbacks of this method:
 #        - Unreliable for noisy images or images with weak boundaries between 
 #          tissue and container
-#        
 def isolateFishByDifference(nparray3D, mode="variance", fractional_diff=0.05,
                             step=1, compareto= -1):
 
@@ -123,7 +127,7 @@ def _isolateFishMode(nparray2D, mode):
     else:
         raise Exception("Mode parameter does not match one of the available descriptor types")
 
-# # \brief Perform high or low bandpass on the passed in array. The default
+## \brief Perform high or low bandpass on the passed in array. The default
 #  is 3 standard deviations from the mean.  Absolute values can be passed in
 #  using min or max.
 # \param[in] nparray 
@@ -131,7 +135,7 @@ def _isolateFishMode(nparray2D, mode):
 # \param[in] max_val    The maximum value to allow inclusive.
 # \param[in] min_val    Minimum value to allow inclusive range.
 # \param[in] value    Value to set cut out values to. Defaults to 0.0
-# \param[in] stdevs: Number of standard deviations to use for the bandpass,
+# \param[in] stdevs Number of standard deviations to use for the bandpass,
 #    cutting out all values outside the range indicated.
 # \return bandpassed NumPy array that has all values out of the range Set
 # to the default value
@@ -170,72 +174,62 @@ def bandpass(nparray, mode="both", max_val=None, min_val=None, value=0.0, stdevs
         resultarray = np.where(indexmod, nullarray, resultarray)
     del indexmod, nullarray
     return resultarray.reshape(nparray.shape)
-# #    @brief Divides data based on element value, relative to the provided threshold.  
+
+## \brief Divides data based on element value, relative to the provided threshold.
+#    \param npdata A numpy array of any type.
+#    \param threshold A float value above which the values are set to 1.0
+#    \param binary Optional parameter indicating if the user only wants the
+#        binary mask back. Defaults to false. Skips the actual calculation if used
+#    \param mode Optional parameter defining which mode to use for thresholding.
+#        Present Options are:
+#            'binary' Sets all values in the image to zero or one.
+#            'upper'  Sets all values above threshold to upperval, default = 1.0
+#            'lower'  Sets all values below or equal to threshold to lowerval, default = 0.0
+#    \param upperval Scalar value or numpy array matching shape of npdata to use for upper threshold value
+#    \param lowerval Scalar value or numpy array matching shape of npdata to use for upper threshold value  
 def threshold(npdata, mask=None, threshold=0.5, upperval=1.0, lowerval=0.0, binary=False, mode="binary", dtype=None):
     '''
-    @brief: Takes the input of the object and thresholds the image to 0 and 1. This removes variablility from and image
+    \brief: Takes the input of the object and thresholds the image to 0 and 1. This removes variablility from and image
      and allows for simple algorithms to be used on the data
-    @param npdata: A numpy array of any type.
-    @param threshold: A float value above which the values are set to 1.0
-    @param binary: Optional parameter indicating if the user only wants the
-        binary mask back. Defaults to false. Skips the actual calculation if used
-    @param mode: Optional parameter defining which mode to use for thresholding.
-        Present Options are:
-            'binary' Sets all values in the image to zero or one.
-            'upper'  Sets all values above threshold to upperval, default = 1.0
-            'lower'  Sets all values below or equal to threshold to lowerval, default = 0.0
-    @param upperval: Scalar value or numpy array matching shape of npdata to use for upper threshold value
-    @param lowerval: Scalar value or numpy array matching shape of npdata to use for upper threshold value
+
     '''
     if mask is None:
         mask = npdata > threshold
-
     if binary:
         return mask
-
-
-    # zeros = np.zeros(mask.shape, dtype="float32")
-    # ones = np.ones(mask.shape, dtype="float32")
     if dtype is not None:
         result = np.empty(npdata.shape, dtype=dtype)
     else:
         result = np.empty(npdata.shape, dtype=npdata.dtype)
-        
-        
     if "binary" in mode.lower():
         # If the values are greater, set them to one, else zero.
         result = np.where(mask, upperval, lowerval)
-
     elif "upper" in mode.lower():
         # Sets all values above threshold to one
-        # zeros = object
         result = np.where(mask, upperval, npdata)
     elif "lower" in mode.lower():
         # Sets all values below or equal to threshold to zero
-        # ones = object
         result = np.where(mask, npdata, lowerval)
-
-
     return result
 
 
-# # @brief Automatically thresholds an array into two segments, by finding local
+##  \brief Automatically thresholds an array into two segments, by finding local
 #    minima on the histogram.  The assumption is that there are two distinct 
 #    classes of data in an array, and that there is a measurable difference 
 #    between these two data.
-#    @param[in] data: numpy array filled with data.
-#    @param[in] high: Optional. Value to use for high guesses
-#    @param[in] low:
-#    @param[in] threshguess: A guess for the threshold value to start with.
-#    @param[in] highstd: Number of standard deviations above the mean to use
+#    \param[in] data: numpy array filled with data.
+#    \param[in] high: Optional. Value to use for high guesses
+#    \param[in] low:
+#    \param[in] threshguess: A guess for the threshold value to start with.
+#    \param[in] highstd: Number of standard deviations above the mean to use
 #        for initial guess. If no high value is given, this is used to generate
 #        a guess from statistical analysis of the data. Default = 4.0  
-#    @param[in] lowstd: Number of standard deviations above the mean to use
+#    \param[in] lowstd: Number of standard deviations above the mean to use
 #        for initial guess. If no high value is given, this is used to generate
 #        a guess from statistical analysis of the data. Default = 2.0  
-#    @param[in] plot: Boolean indicating whether to show a plot of the 
+#    \param[in] plot: Boolean indicating whether to show a plot of the 
 #        calculation at each step.
-#    @return Floating point value denoting the theshold that evenly divides
+#    \return Floating point value denoting the theshold that evenly divides
 #        the data based on the initial guesses.
 def autothreshold(data, threshguess=None, high=None, low=None, highstd=4.0,
                   lowstd=1.0, plot=False):
@@ -331,7 +325,7 @@ def hough_lines(d2image, d2_iscanny=False, pixel_step_size=1.0, angle_samples=18
                       )
               )
     # Because we want to have a variable resolution, divide the output by the pixel step size
-    accum = np.zeros((int(romax / pixel_step_size), int(angle_samples)), dtype="uint32")
+    accum = np.zeros((int(romax ), int(angle_samples)), dtype="uint32")
     rospace=np.linspace(0.0, romax, num=ro_samples)
     theta, tstep = np.linspace(0.0, np.pi, num=angle_samples, retstep=True)
     print(tstep)
@@ -346,6 +340,33 @@ def hough_lines(d2image, d2_iscanny=False, pixel_step_size=1.0, angle_samples=18
             accum[ro[i], theta[i]/tstep] += 1
     argarray = np.argsort(accum, axis=None)
     return argarray,accum
+
+##\brief Finds circles in an image.
+def hough_circles(d2image, d2_iscanny=False, gridsize=100 **kwargs ):
+    if not d2_iscanny:
+        data = itktest.canny_edge_detector(d2image, returnNP=True,  **kwargs)
+    else:
+        data = d2image
+    data=np.asanyarray(data,  dtype="bool8")
+    coords = get_coords(data)
+    
+    #We're going to assume that R is less than 0.5*min(d2image.shape)
+    #This is convenient, because it only allows for circles completely contained in the image
+    r_max=0.5*min(d2image.shape)
+    x0=np.linspace(0.0, d2image.shape[1], endpoint=False)
+    y0=np.linspace(0.0, d2image.shape[0], endpoint=False)
+    r2_space=np.square(np.linspace(0.0,r_max, gridsize), endpoint=True)
+    accum=np.zeros((len(r2_space),len(y0),len(x0)),dtype="uint32")
+   
+
+    
+    for x,y in coords:
+        for y0i,x0i in it.product(y0,x0):
+            r2=(x-x0i)**2+(y-y0i)**2
+            ri=np.searchsorted(r2_space, r2)
+
+
+
 def _update_accumulator(accumulator, additions_np, theta_bins, ro_step,ro_bins):
     pass
 
