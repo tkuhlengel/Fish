@@ -314,7 +314,7 @@ def hough_transform(image, parametric_eq=r"RO={X}*cos({THETA})+{Y}*sin({THETA})"
 ## \brief Performs a 2D line detection
 
 def hough_lines(d2image, d2_iscanny=False, pixel_step_size=1.0, angle_samples=181, ro_samples=200, N_return=5,
-                return_all=False):
+                return_all=False, **kwargs):
     if not d2_iscanny:
         data = itktest.canny_edge_detector(d2image, returnNP=True,  **kwargs)
     else:
@@ -361,49 +361,93 @@ def hough_lines(d2image, d2_iscanny=False, pixel_step_size=1.0, angle_samples=18
 #  \param d2image A 2-dimensional numpy image array. This function runs faster if the image is already the
 #   canny edge detected image in boolean form. If it is not, it will be run through the detector
 #   \see itktest.canny_edge_detector
-#  \param 
-def hough_circles(d2image, d2_iscanny=False, radius_samples=200, xy_samples=[200,200], **kwargs ):
+#  \param d2_iscanny Boolean indicating whether the image input has already undergone canny edge detection.
+#  \param radius_samples
+#  \param xy_samples
+#  \param N_return Number of top candidates to return.
+def hough_circles(d2image, d2_iscanny=False, radius_samples=200, xy_samples=[200,200], N_return=5,
+                return_all=False, **kwargs ):
     if not d2_iscanny:
         data = itktest.canny_edge_detector(d2image, returnNP=True,  **kwargs)
     else:
         data = d2image
-        
-    if type(xy_samples) in {list, tuple, np.ndarray}:
-        xsample,ysample=xy_samples
-    else:
-        xsample=xy_samples
-        ysample=xy_samples
+    
     data=np.asanyarray(data,  dtype="bool8")
     coords = get_coords(data)
     #We're going to assume that Radius is less than the hypotenuse of the image 
     #This is convenient, because it only allows for circles completely contained in the image
-    r2_max=float(data.shape[0] ** 2 + data.shape[1] ** 2)
-    r_max = np.sqrt(r2_max)
-    x0, xstep=np.linspace(0.0, d2image.shape[1], num=xsample, endpoint=False, retstep=True)
-    y0, ystep=np.linspace(0.0, d2image.shape[0], num=ysample, endpoint=False, retstep=True)
-    r2_space=np.square(np.linspace(0.0,r_max, num=radius_samples, endpoint=True))
+    r_max= np.sqrt(float(data.shape[0] ** 2 + data.shape[1] ** 2))
+    x0=np.linspace(0.0, d2image.shape[1], num=xy_samples[0], endpoint=False, retstep=False)
+    y0=np.linspace(0.0, d2image.shape[0], num=xy_samples[1], endpoint=False, retstep=False)
+    r2_space=np.square(np.linspace(0.0,r_max, num=radius_samples, endpoint=False))
+    #r2_space=np.linspace(0.0,r_max, gridsize, endpoint=True)
     
+    #Create a list of index arrays
     x0_ind=np.arange(0, len(x0), dtype="uint16")
     y0_ind=np.arange(0, len(y0), dtype="uint16")
     r2_ind=np.arange(0, len(r2_space),dtype="uint16")
-    
-    #r2_space=np.linspace(0.0,r_max, gridsize, endpoint=True)
+    #ind=[np.arange(0, len(component), dtype="uint16") for component in {r2_space,y0,x0}]
+
     accum=np.zeros((len(r2_space),len(y0),len(x0)),dtype="uint32")
+    #Create a 1-D view
+    accum_x=np.ravel(accum)
     
-    for x,y in coords:
-        for yi in range(len(y0)):
-            for xi in range(len(x0)):
-                #r2=np.sqrt((x-x0[xi])**2+(y-y0[yi])**2)
-                r2=(x-x0[xi])**2+(y-y0[yi])**2
-                if r2<r2_max:
-                    ri=np.searchsorted(r2_space, r2)
-                    accum[ri,yi, xi]+=1
+    xy=ndRightJoin(x0,y0)
+    xy_ind=ndRightJoin(x0_ind, y0_ind)
+    
+    #Choosing to split them for the equation
+    x0_eq,y0_eq=xy[:,0], xy[:,1]
+    x_ind,y_ind=xy_ind[:,0], xy_ind[:,1]
+    #Now going to 
+    
+    
+    for x, y in coords:
+        #Perform the transform to this space
+        r2=(x-x0_eq)**2+(y-y0_eq)**2
+        r2_sort=np.searchsorted(r2_space,r2)
+        #Get the equivalent coordinates for the output
+        #Make the 2-D results into 1-D results for easy indexing of the accumulator
+        index=np.ravel_multi_index((r2_sort, y0_ind, x0_ind),accum.shape, mode="raise")
+        accum_x[index]+=1
+    
+    indices=np.argwhere(
+        accum >= findNthGreatestValue(accum, count=N_return)
+        )
+    r2_y_x=np.column_stack((r2_space[indices[:,0]],y0[indices[:,1],x0[indices[:,2]]]))
+    
+        
+        
+    #    for x,y in coords:
+    #        for yi in range(len(y0)):
+    #            for xi in range(len(x0)):
+    #                #r2=np.sqrt((x-x0[xi])**2+(y-y0[yi])**2)
+    #                r2=(x-x0)**2+(y-y0)**2
+    #                if r2<r2_max:
+    #                    ri=np.searchsorted(r2_space, r2)
+    #                    accum[ri,yi, xi]+=1
     #    for y0i,x0i in it.product(y0,x0):
     #        
     #        ri=np.searchsorted(r2_space, r2)
     #        accum[ri, 
-    return accum,(x0,y0,r2_space)
+    if return_all:
+        return r2_y_x,(accum, x0,y0,r2_space)
+    else:
+        return r2_y_x
 
+def ndRightJoin(*vectors):
+    '''
+    Right Join a sequence of N vectors into an array of length YxN, 
+    ''' 
+    mesh=np.meshgrid(*vectors, indexing="ij")
+    stacked=[matrix.flatten() for matrix in mesh]
+    return np.column_stack(stacked)
+    
+    return np.reshape(stacked,  (-1,len(vectors)))
+
+def hough_circle_setup():
+    pass
+def hough_circle_work(func, accum, coords, linspace_eq_result, ):
+    pass
 def _update_accumulator(accumulator, additions_np, theta_bins, ro_step,ro_bins):
     pass
        
@@ -689,25 +733,39 @@ def get_coordinates_py(image, maxdepth=0, depth=0):
             sublist.append([i, get_coordinates_py(image[i], maxdepth=maxdepth, depth=depth + 1)])
     return right_join_py(sublist)
 """
-def right_join(nestedList):
+def right_join(nestedList, two_list=False):
+    '''
+    Joins a nested list of length N, with subarrays of length M into an NxM format.
+    two_list indicates whether it should join two lists instead of a nested list
+    '''
     result = []  # np.array((100,3), dtype="float32")
     #define the columns
     #np.ndarray c1, c2
-    for listi in nestedList:
-        try:
-            #if type(listi[1]) == list or type(listi[1][1]) == np.ndarray:
-            if type(listi[1][1])==list or type(listi[1][1]) == np.ndarray:
-                listi[1] = right_join(listi[1])
-            #elif type(listi[1]) == np.ndarray:
-            #    listi[1] = right_join(listi[1])
-        except Exception as exc:
-            #print(exc)
-            pass
-            
-        c2 = np.asarray(listi[1], dtype="float32")
-        c1 = np.zeros((c2.shape[0],), dtype="float32")
-        c1[:] = listi[0]
-        result.append(np.column_stack((c1, c2)))
+    if not two_list:
+        for listi in nestedList:
+            try:
+                #if type(listi[1]) == list or type(listi[1][1]) == np.ndarray:
+                if type(listi[1][1])==list or type(listi[1][1]) == np.ndarray:
+                    listi[1] = right_join(listi[1])
+                #elif type(listi[1]) == np.ndarray:
+                #    listi[1] = right_join(listi[1])
+            except Exception as exc:
+                #print(exc)
+                pass
+                
+            c2 = np.asarray(listi[1])
+            c1 = np.zeros((c2.shape[0],))
+            c1[:] = listi[0]
+            result.append(np.column_stack((c1, c2)))
+    if two_list:
+        List1=np.asarray(nestedList[0])
+        col2=np.asarray(nestedList[1])
+        
+        for i in List1:
+            #c2 = listi[1])
+            col1 = np.zeros((c2.shape[0],))
+            col1[:] = listi[0]
+        result.append(np.column_stack((col1, col2)))
     return np.concatenate(result)
 
 def get_coordinates(image, maxdepth=0, depth=0):
