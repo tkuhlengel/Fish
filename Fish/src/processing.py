@@ -307,58 +307,86 @@ def autothreshold(data, threshguess=None, high=None, low=None, highstd=4.0,
                            title="Histogram for iteration {}".format(0))
 
     return thresh
-# # \brief Arbitrary parametric shape hough transform. (Pronounced "Haf" transform)
+## \brief Arbitrary parametric shape hough transform. (Pronounced "Haf" transform)
 def hough_transform(image, parametric_eq=r"RO={X}*cos({THETA})+{Y}*sin({THETA})"):
     pass
-# # \brief Performs a 2D line detection
-def hough_lines(d2image, d2_iscanny=False, pixel_step_size=1.0, angle_samples=181, ro_samples=200):
-    # TODO
-    if not d2_iscanny:
-        data = itktest.canny_edge_detector(d2image, returnNP=True)
-    else:
-        data = d2image
-    coords = get_coords(data)
-    # Define the maximum size of ro to be the length of the hypotenuse of the image
-    romax = int(
-              np.sqrt(
-                      float(
-                            d2image.shape[0] ** 2 + d2image.shape[1] ** 2
-                            )
-                      )
-              )
-    # Because we want to have a variable resolution, divide the output by the pixel step size
-    accum = np.zeros((int(romax ), int(angle_samples)), dtype="uint32")
-    rospace=np.linspace(0.0, romax, num=ro_samples)
-    theta, tstep = np.linspace(0.0, np.pi, num=angle_samples, retstep=True)
-    print(tstep)
-    accum=np.zeros((1,2), dtype="float32")
-    #Here's where the work goes on
-    for x, y in coords:
-        for ti in range(len(theta)):
-            ro = x * np.cos(theta[ti]) + y * np.sin(theta[ti])
-            accum_temp=np.column_stack((ro,theta))
-        #_update_accumulator(accum, thetabins, ro_step, ro_bins)
-        #accum=np.concatenate(accum,accum_temp)
-        for i in np.arange(len(ro)):
-            accum[ro[i], theta[i]/tstep] += 1
-    argarray = np.argsort(accum, axis=None)
-    return argarray,accum
 
-##\brief Finds circles in an image.
-def hough_circles(d2image, d2_iscanny=False, gridsize=100, **kwargs ):
+## \brief Performs a 2D line detection
+
+def hough_lines(d2image, d2_iscanny=False, pixel_step_size=1.0, angle_samples=181, ro_samples=200, N_return=5,
+                return_all=False):
     if not d2_iscanny:
         data = itktest.canny_edge_detector(d2image, returnNP=True,  **kwargs)
     else:
         data = d2image
+    coords=get_coords(data)
+    #Number of divisions in 180 degrees to use for angle sampling.
+    #Largest value is the hypotenuse of the image dimensions
+    romax = np.sqrt(float(data.shape[0] ** 2 + data.shape[1] ** 2))
+    #The evenly spaced bins of RO and theta
+    rospace=np.linspace(0.0, romax,    num=ro_samples,    endpoint=False, retstep=False)
+    theta = np.linspace(0.0, np.pi/2., num=angle_samples, endpoint=False, retstep=False)
+    theta_ind=np.arange(0,len(theta),dtype="uint16")
+    
+    #Generate the accumulator space. X axis
+    accum = np.zeros(( len(theta),len(rospace)), dtype="uint32")
+    accum_x=np.ravel(accum)
+    #Something to store extra results
+    
+    #For each coordinate, apply theta equation to calculate ro
+    ro=[]
+    #print(theta_ind)
+    for x, y in coords:
+        #Perform the transform to this space
+        ri=x * np.cos(theta) + y * np.sin(theta)
+        ro.append(ri)
+        ri_sort=np.searchsorted(rospace, ri)
+        #Get the equivalent coordinates for the output
+        #Make the 2-D results into 1-D results for easy indexing of the accumulator
+        index=np.ravel_multi_index((theta_ind,ri_sort),accum.shape, mode="raise")
+        accum_x[index]+=1
+    #Index locations where the greatest values are. Returned as numpy arrays of point coordinates
+    indices=np.argwhere(
+        accum >= findNthGreatestValue(accum, count=N_return)
+        )
+    
+    ro_the=np.column_stack((rospace[indices[:,1]],theta[indices[:,0]]))
+
+    if return_all:
+        return ro_the, (accum,rospace,theta)
+    else:
+        return ro_the
+
+##\brief Finds circles in an image.
+#  \param d2image A 2-dimensional numpy image array. This function runs faster if the image is already the
+#   canny edge detected image in boolean form. If it is not, it will be run through the detector
+#   \see itktest.canny_edge_detector
+#  \param 
+def hough_circles(d2image, d2_iscanny=False, radius_samples=200, xy_samples=[200,200], **kwargs ):
+    if not d2_iscanny:
+        data = itktest.canny_edge_detector(d2image, returnNP=True,  **kwargs)
+    else:
+        data = d2image
+        
+    if type(xy_samples) in {list, tuple, np.ndarray}:
+        xsample,ysample=xy_samples
+    else:
+        xsample=xy_samples
+        ysample=xy_samples
     data=np.asanyarray(data,  dtype="bool8")
     coords = get_coords(data)
-    #We're going to assume that R is less than 0.5*min(d2image.shape)
+    #We're going to assume that Radius is less than the hypotenuse of the image 
     #This is convenient, because it only allows for circles completely contained in the image
-    r_max= max(d2image.shape)
-    r2_max=r_max**2
-    x0, xstep=np.linspace(0.0, d2image.shape[1], endpoint=False, retstep=True)
-    y0, ystep=np.linspace(0.0, d2image.shape[0], endpoint=False, retstep=True)
-    r2_space=np.square(np.linspace(0.0,r_max, gridsize, endpoint=True))
+    r2_max=float(data.shape[0] ** 2 + data.shape[1] ** 2)
+    r_max = np.sqrt(r2_max)
+    x0, xstep=np.linspace(0.0, d2image.shape[1], num=xsample, endpoint=False, retstep=True)
+    y0, ystep=np.linspace(0.0, d2image.shape[0], num=ysample, endpoint=False, retstep=True)
+    r2_space=np.square(np.linspace(0.0,r_max, num=radius_samples, endpoint=True))
+    
+    x0_ind=np.arange(0, len(x0), dtype="uint16")
+    y0_ind=np.arange(0, len(y0), dtype="uint16")
+    r2_ind=np.arange(0, len(r2_space),dtype="uint16")
+    
     #r2_space=np.linspace(0.0,r_max, gridsize, endpoint=True)
     accum=np.zeros((len(r2_space),len(y0),len(x0)),dtype="uint32")
     
