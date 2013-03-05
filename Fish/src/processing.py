@@ -335,7 +335,7 @@ def hough_lines(d2image, d2_iscanny=False, pixel_step_size=1.0, angle_samples=18
     #Here's where the work goes on
     for x, y in coords:
         for ti in range(len(theta)):
-            ro = x * np.cos(theta[ti]) + y * np.cos(theta[ti])
+            ro = x * np.cos(theta[ti]) + y * np.sin(theta[ti])
             accum_temp=np.column_stack((ro,theta))
         #_update_accumulator(accum, thetabins, ro_step, ro_bins)
         #accum=np.concatenate(accum,accum_temp)

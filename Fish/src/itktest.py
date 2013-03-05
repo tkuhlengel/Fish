@@ -42,7 +42,7 @@ def npBoolReturn(fn):
 
         output=fn(*args, **kwargs)
         if type(output) == si.Image:
-            output=si.GetArrayFromImage(output, dtype="bool8")
+            output=si.GetArrayFromImage(output)
         return np.asanyarray(output, dtype="bool8")
     return wrapper
 
