@@ -26,7 +26,7 @@ def hough_lines(d2image, d2_iscanny=False, angle_samples=181, ro_samples=200, N_
         data = itktest.canny_edge_detector(d2image, returnNP=True,  **kwargs)
     else:
         data = np.asanyarray(d2image,dtype="bool8")
-    coords=processing.get_coords(data)
+    coords=np.asanyarray(np.argwhere(data),dtype="int16")
     #Number of divisions in 180 degrees to use for angle sampling.
     #Largest value is the hypotenuse of the image dimensions
     romax = np.sqrt(float(data.shape[0] ** 2 + data.shape[1] ** 2))
@@ -40,16 +40,19 @@ def hough_lines(d2image, d2_iscanny=False, angle_samples=181, ro_samples=200, N_
     accum_x=np.ravel(accum)
     #Something to store extra results
     
-    #For each coordinate, apply theta equation to calculate ro
+    
     #ro=[]
     #print(theta_ind)
-    for x, y in coords:
+    for (x, y) in  coords:
         #Perform the transform to this space
-        
+        #For each coordinate, apply theta equation to calculate ro
         ri=x * np.cos(theta) + y * np.sin(theta)
         #ro.append(ri)
         ri_sort=np.searchsorted(rospace, ri)
-        print(x,y, "\t",ri_sort.max(), ri_sort.min())
+        
+        if ri_sort.max()>(ro_samples-1):
+            print("Wat")
+        print(x,y, "    ",ri_sort.max(), ri_sort.min())
         #Get the equivalent coordinates for the output
         #Make the 2-D results into 1-D results for easy indexing of the accumulator
         index=np.ravel_multi_index((theta_ind,ri_sort),accum.shape, mode="raise")
@@ -122,8 +125,8 @@ def hough_circles(d2image, d2_iscanny=False, radius_samples=200, xy_samples=[200
     #Create a 1-D view
     accum_x=np.ravel(accum)
     
-    xy=ndRightJoin(x0,y0)
-    xy_ind=ndRightJoin(x0_ind, y0_ind)
+    xy=processing.right_join(x0,y0)
+    xy_ind=processing.right_join((x0_ind, y0_ind),two_list=True)
     
     #Choosing to split them for the equation
     x0_eq,y0_eq=xy[:,0], xy[:,1]

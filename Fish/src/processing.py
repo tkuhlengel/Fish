@@ -437,12 +437,12 @@ def projections(volume, func=np.amax):
 
     return axmax
 
-# #@brief Removes the greatest n values of the flattened array
-# @param data Numpy Array containing the data you want to sort
-# @param count The number of points to change. Optional. Defaults to 0.01% of the data
-# @param fraction The fraction of data points to change.  0.01= 1% changed. Default is 0.0001
-# @param replacewith The function or value to replace selected values with with
-# @returns A copy of the nparray with the greatest <count> values set to the minimum
+## \brief Removes the greatest n values of the flattened array
+# \param data Numpy Array containing the data you want to sort
+# \param count The number of points to change. Optional. Defaults to 0.01% of the data
+# \param fraction The fraction of data points to change.  0.01= 1% changed. Default is 0.0001
+# \param replacewith The function or value to replace selected values with with
+# \returns A copy of the nparray with the greatest <count> values set to the minimum
 def removeGreatest(data, count=None, fraction=.0001, mode="max", replacewith=np.min):
 
     # make a copy of the array in flattened form.
@@ -498,13 +498,11 @@ def findNthGreatestValue(data, count=None, fraction=.0001, sort_array=None):
 
     index = sort_array[length - count]
     return data.flat[index]
-# @autojit()
+
 def linewise(image, threshold=0.5):
-    # index=np.nonzero(image)
     data = np.copy(image)
     index = image.flat > threshold
     index = index.reshape(image.shape)
-    # img = np.copy(image)
     print(data.shape)
     result = []
     counter = 0
@@ -539,96 +537,23 @@ def linewise(image, threshold=0.5):
     print(len(x))
     return x.reshape(image.shape)
 
-#
-# _4_connected = numpy.array([[0, 1, 0],
-#                             [1, 1, 1],
-#                             [0, 1, 0]], dtype=bool)
 
-# def kill_small(binary_image, min_size, structure=_4_connected):
-#    label_image, num_objects = sp.ndimage.label(binary_image, structure)
-#    # Label 0 is the background...
-#    object_labels = np.arange(1, num_objects+1)
-#    # Get the area of each labeled object by summing up the pixel  values in the
-#    # binary image. (Divide the binary image by its max val to ensure  that the image
-#    # consists of 1s and 0s, so that the sum equals the area in pixels.)
-#    areas = np.array(np.sum(binary_image / binary_image.max(), label_image, object_labels))
-#    big_objects = object_labels[areas >= min_size]
-#    # This part will be pretty slow! But I can't think right now how to  speed it up.
-#    # (If there are more big objects than small objects, it would be faster to
-#    # reverse this process and xor out the small objects from the binary image,
-#    # rather than the below, which or's up a new image of just the  large objects.)
-#    big_object_image = numpy.zeros(binary_image.shape, dtype=bool)
-#    for bo in big_objects:
-#        big_object_image |= label_image == bo
-#    return big_object_image
-x="""
-def right_join_py(nestedList, dtype="float32"):
-    result = []  # np.array((100,3), dtype="float32")
-    #define the columns
-    #np.ndarray c1, c2
-    for i in range(len(nestedList)):
-        if len(nestedList[i][1])==0:
-            continue
-        try:
-            if type(nestedList[i][1][1]) == list :
-                #if len(nestedList[i][1])>0:
-                nestedList[i][1] = right_join_py(nestedList[i][1])
-            #elif type(nestedList[i][1]) == list:
-            #   if type(nestedList[i][1][1])==list or type(nestedList[i][1][1]) == np.ndarray:
-            #        nestedList[i][1] = right_join_py(nestedList[i][1])
-        #elif type(nestedList[i][1]) == np.ndarray:
-        #    nestedList[i][1] = right_join(nestedList[i][1])
-        except Exception as exc:
-            #print(exc)
-            pass
-        if len(nestedList[i]) > 0:
-     
-            c2 = np.asarray(nestedList[i][1], dtype=dtype)
-            c1 = np.zeros((c2.shape[0],), dtype=dtype)
-            c1[:] = nestedList[i][0]
-            result.append(np.column_stack((c1, c2)))
-    if len(result)>1:
-        result=np.concatenate(result)
-        
-    return result
-
-def get_coordinates_py(image, maxdepth=0, depth=0):
-    '''
-    Get a list of coordinates indicating trues image mask down to a coordinate list in n dimensions.
-    Recursively stacks data and then right joins it.  Should be very memory efficient.
-    '''   
-    
-    #Should only be altered on the first entry.  Assuming we have more than 0 dimensions
-    if maxdepth is 0:
-        #print(image.shape)
-        maxdepth = image.ndim
-        assert maxdepth>0, "Error: Max depth was not changed."
-    if image.ndim == 1:
-        sublist = []
-        for i in range(len(image)):
-            if image[i]:
-                sublist.append(i)
-        return sublist
-    elif maxdepth > depth:
-        sublist = []
-        for i in range(image.shape[0]):
-            sublist.append([i, get_coordinates_py(image[i], maxdepth=maxdepth, depth=depth + 1)])
-    return right_join_py(sublist)
-"""
-def right_join(nestedList, two_list=False ):
+def right_join(list_group, sublists=False ):
     '''
     Joins a nested list of length N, with subarrays of length M into an NxM format.
-    two_list indicates whether it should join two lists instead of a nested list
+    sublists indicates whether the list_group contains lists more than 1 layer deep. 
+    ->[ a[ b[], c[] ] ] vs [ a[], b[], c[] ]
+
     '''
     result = []  # np.array((100,3), dtype="float32")
     #define the columns
     #np.ndarray c1, c2
-    if not two_list:
-        for listi in nestedList:
+    if sublists:
+        for listi in list_group:
             try:
                 #if type(listi[1]) == list or type(listi[1][1]) == np.ndarray:
                 if type(listi[1][1])==list or type(listi[1][1]) == np.ndarray:
-                    listi[1] = right_join(listi[1])
+                    listi[1] = right_join(listi[1], sublists=sublists)
                 #elif type(listi[1]) == np.ndarray:
                 #    listi[1] = right_join(listi[1])
             except Exception as exc:
@@ -639,15 +564,15 @@ def right_join(nestedList, two_list=False ):
             c1 = np.zeros((c2.shape[0],))
             c1[:] = listi[0]
             result.append(np.column_stack((c1, c2)))
-    if two_list:
-        print(nestedList)
+    else:
+        print(list_group)
         #Left is the left side. Repeats elements to fill spaces needed for second array
-        left=np.asanyarray(nestedList[0])
+        left=np.asanyarray(list_group[0])
         assert np.ndim(left)==1, "Too many dimensions in left array"
-        if len(nestedList)>2:
-            right=right_join(nestedList[1::],two_list=True)
+        if len(list_group)>2:
+            right=right_join(list_group[1::],sublists=sublists)
         else:
-            right=np.asanyarray(nestedList[1])
+            right=np.asanyarray(list_group[1])
         
         for i in range(len(left)):
             col1 = np.zeros((right.shape[0],))
@@ -673,7 +598,7 @@ def get_coordinates(image, maxdepth=0, depth=0):
         sublist = []
         for i in range(image.shape[0]):
             sublist.append([i, get_coordinates(image[i], maxdepth=maxdepth, depth=depth + 1)])
-    return right_join(sublist)    
+    return right_join(sublist,sublists=True)    
 
 def test():
     # print("Test not yet written, ending program")
