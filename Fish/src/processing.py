@@ -5,7 +5,7 @@
 #
 # \author: Trevor Kuhlengel
 
-#import sys
+import sys
 import itertools as it
 
 import numpy as np
@@ -13,9 +13,6 @@ import scipy as sp
 from scipy import ndimage
 #from scipy.ndimage.morphology import *
 import matplotlib as mpl
-
-
-
 
 import graphing
 import itktest
@@ -503,18 +500,45 @@ def getLargestSliceIndex(slicelist):
             count += 1
     assert maxvi >= 0, "Max index is not greater than the start index, check slice list for negative values"
     return maxvi
+
+
+## \brief Converts an image into an unsigned integer format from any other format.
+#    \param npdata
+#    \param bitdepth Number of bits to use in the integer. Powers of 2 are acceptable.
+#    \param out Output array. Must be a numpy array of correct dtype and the same shape as input.
+#    \param bandpass Boolean indicating whether the array should be high and low bandpassed.
+def rescaleToUnsignedInt(npdata, bitdepth=16, out=None, bandpass=True, minFrac=0.00001, maxFrac=0.99999):
+    sortarg=np.argsort(npdata, axis=None)
+    minval=findNthGreatestValue(npdata, fraction=1-minFrac, sort_array=sortarg)
+    maxval=findNthGreatestValue(npdata, fraction=1-maxFrac, sort_array=sortarg)
+    if out is None:
+        out=np.zeros_like(npdata, dtype="uint{}".format(bitdepth))
+    #Test to see if the dtype is correct   
+    elif out.dtype != np.zeros((1,),"uint{}".format(bitdepth)).dtype:
+        out=np.asanyarray(out, dtype="uint{}".format(bitdepth))
+    #Make sure the shape is the same and tell the user if it isn't without aborting.
+    if out.shape != npdata.shape:
+        sys.stderr.write("Error in convertToUnsignedInt: out array shape does"+
+        " not match the input. Clean array of correct shape and type will be "+
+        "returned instead.")
+    npdata_bandpass=np.where(npdata<minval, minval, npdata)
+    npdata_bandpass=np.where(npdata_bandpass>maxval, maxval, npdata_bandpass)
+    #rescale the data to the correct range
+    out=np.asanyarray(
+                      ((npdata_bandpass - minval) / (maxval - minval))\
+                      * (2 ** bitdepth - 1)
+                      , dtype="uint{}".format(bitdepth)
+                      )
+    return out
         
-    
 def binaryFillHoles(binarydata, kernel=np.ones((3, 3, 3))):
     
     result = np.zeros_like(binarydata)
-    # binary_fill_holes(binarydata, output=result)
     if kernel is None:
         ndimage.binary_fill_holes(binarydata, output=result)
     else:
         ndimage.binary_fill_holes(binarydata, structure=kernel, output=result)
     
-    # binary_fill
     return result
 
 def binaryClosing(binarydata, structure=None, iterations=1):
