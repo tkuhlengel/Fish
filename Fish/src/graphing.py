@@ -188,8 +188,9 @@ def output_figure(imglist,figsize=(10,30), dpi=101):
     
 print("Module graphing.py loaded successfully")
 if __name__=='__main__':
-    import fish
-    testfish="/mnt/scratch/tkk3/joinedImages/resized/rec_J29-33_33D_PTAwt_16p2_30mm_w4Dd_xy292_z1047_cubic-0-5_10.0um.nrrd"
-    fish=fish.Fish(testfish)
-    fish.load()
+    #import fish
+    #testfish="/mnt/scratch/tkk3/joinedImages/resized/rec_J29-33_33D_PTAwt_16p2_30mm_w4Dd_xy292_z1047_cubic-0-5_10.0um.nrrd"
+    #fish=fish.Fish(testfish)
+    #fish.load()
+    pass
     

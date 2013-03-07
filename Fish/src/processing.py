@@ -5,7 +5,7 @@
 #
 # \author: Trevor Kuhlengel
 
-#import sys
+import sys
 import itertools as it
 
 import numpy as np
@@ -13,9 +13,6 @@ import scipy as sp
 from scipy import ndimage
 #from scipy.ndimage.morphology import *
 import matplotlib as mpl
-
-
-
 
 import graphing
 import itktest
@@ -159,20 +156,16 @@ def bandpass(nparray, mode="both", max_val=None, min_val=None, value=0.0, stdevs
         mean = np.mean(nparray.flat)
         stdev = np.std(nparray.flat)
     resultarray = nparray.flatten()
-    nullarray = np.zeros(resultarray.shape)
-    if value != 0.0 and type(value) == type(float()):
-        nullarray[:] = value
+    #if value != 0.0 and type(value) == type(float()):
+    #    nullarray[:] = value
     if low:
         if min_val is None:
             min_val = mean - stdevs * stdev
-        indexmod = resultarray < min_val
-        resultarray = np.where(indexmod, 0.0, resultarray)
+        resultarray = np.where(resultarray < min_val, 0.0, resultarray)
     if high:
         if max_val is None:
             max_val = mean + stdevs * stdev
-        indexmod = resultarray > max_val
-        resultarray = np.where(indexmod, nullarray, resultarray)
-    del indexmod, nullarray
+        resultarray = np.where(resultarray > max_val, value, resultarray)
     return resultarray.reshape(nparray.shape)
 
 ## \brief Divides data based on element value, relative to the provided threshold.
@@ -307,153 +300,10 @@ def autothreshold(data, threshguess=None, high=None, low=None, highstd=4.0,
                            title="Histogram for iteration {}".format(0))
 
     return thresh
-## \brief Arbitrary parametric shape hough transform. (Pronounced "Haf" transform)
-def hough_transform(image, parametric_eq=r"RO={X}*cos({THETA})+{Y}*sin({THETA})"):
-    pass
-
-## \brief Performs a 2D line detection
-
-def hough_lines(d2image, d2_iscanny=False, pixel_step_size=1.0, angle_samples=181, ro_samples=200, N_return=5,
-                return_all=False, **kwargs):
-    if not d2_iscanny:
-        data = itktest.canny_edge_detector(d2image, returnNP=True,  **kwargs)
-    else:
-        data = d2image
-    coords=get_coords(data)
-    #Number of divisions in 180 degrees to use for angle sampling.
-    #Largest value is the hypotenuse of the image dimensions
-    romax = np.sqrt(float(data.shape[0] ** 2 + data.shape[1] ** 2))
-    #The evenly spaced bins of RO and theta
-    rospace=np.linspace(0.0, romax,    num=ro_samples,    endpoint=False, retstep=False)
-    theta = np.linspace(0.0, np.pi/2., num=angle_samples, endpoint=False, retstep=False)
-    theta_ind=np.arange(0,len(theta),dtype="uint16")
-    
-    #Generate the accumulator space. X axis
-    accum = np.zeros(( len(theta),len(rospace)), dtype="uint32")
-    accum_x=np.ravel(accum)
-    #Something to store extra results
-    
-    #For each coordinate, apply theta equation to calculate ro
-    ro=[]
-    #print(theta_ind)
-    for x, y in coords:
-        #Perform the transform to this space
-        ri=x * np.cos(theta) + y * np.sin(theta)
-        ro.append(ri)
-        ri_sort=np.searchsorted(rospace, ri)
-        #Get the equivalent coordinates for the output
-        #Make the 2-D results into 1-D results for easy indexing of the accumulator
-        index=np.ravel_multi_index((theta_ind,ri_sort),accum.shape, mode="raise")
-        accum_x[index]+=1
-    #Index locations where the greatest values are. Returned as numpy arrays of point coordinates
-    indices=np.argwhere(
-        accum >= findNthGreatestValue(accum, count=N_return)
-        )
-    
-    ro_the=np.column_stack((rospace[indices[:,1]],theta[indices[:,0]]))
-
-    if return_all:
-        return ro_the, (accum,rospace,theta)
-    else:
-        return ro_the
-
-##\brief Finds circles in an image.
-#  \param d2image A 2-dimensional numpy image array. This function runs faster if the image is already the
-#   canny edge detected image in boolean form. If it is not, it will be run through the detector
-#   \see itktest.canny_edge_detector
-#  \param d2_iscanny Boolean indicating whether the image input has already undergone canny edge detection.
-#  \param radius_samples
-#  \param xy_samples
-#  \param N_return Number of top candidates to return.
-def hough_circles(d2image, d2_iscanny=False, radius_samples=200, xy_samples=[200,200], N_return=5,
-                return_all=False, **kwargs ):
-    if not d2_iscanny:
-        data = itktest.canny_edge_detector(d2image, returnNP=True,  **kwargs)
-    else:
-        data = d2image
-    
-    data=np.asanyarray(data,  dtype="bool8")
-    coords = get_coords(data)
-    #We're going to assume that Radius is less than the hypotenuse of the image 
-    #This is convenient, because it only allows for circles completely contained in the image
-    r_max= np.sqrt(float(data.shape[0] ** 2 + data.shape[1] ** 2))
-    x0=np.linspace(0.0, d2image.shape[1], num=xy_samples[0], endpoint=False, retstep=False)
-    y0=np.linspace(0.0, d2image.shape[0], num=xy_samples[1], endpoint=False, retstep=False)
-    r2_space=np.square(np.linspace(0.0,r_max, num=radius_samples, endpoint=False))
-    #r2_space=np.linspace(0.0,r_max, gridsize, endpoint=True)
-    
-    #Create a list of index arrays
-    x0_ind=np.arange(0, len(x0), dtype="uint16")
-    y0_ind=np.arange(0, len(y0), dtype="uint16")
-    r2_ind=np.arange(0, len(r2_space),dtype="uint16")
-    #ind=[np.arange(0, len(component), dtype="uint16") for component in {r2_space,y0,x0}]
-
-    accum=np.zeros((len(r2_space),len(y0),len(x0)),dtype="uint32")
-    #Create a 1-D view
-    accum_x=np.ravel(accum)
-    
-    xy=ndRightJoin(x0,y0)
-    xy_ind=ndRightJoin(x0_ind, y0_ind)
-    
-    #Choosing to split them for the equation
-    x0_eq,y0_eq=xy[:,0], xy[:,1]
-    x_ind,y_ind=xy_ind[:,0], xy_ind[:,1]
-    #Now going to 
-    
-    
-    for x, y in coords:
-        #Perform the transform to this space
-        r2=(x-x0_eq)**2+(y-y0_eq)**2
-        r2_sort=np.searchsorted(r2_space,r2)
-        #Get the equivalent coordinates for the output
-        #Make the 2-D results into 1-D results for easy indexing of the accumulator
-        index=np.ravel_multi_index((r2_sort, y0_ind, x0_ind),accum.shape, mode="raise")
-        accum_x[index]+=1
-    
-    indices=np.argwhere(
-        accum >= findNthGreatestValue(accum, count=N_return)
-        )
-    r2_y_x=np.column_stack((r2_space[indices[:,0]],y0[indices[:,1],x0[indices[:,2]]]))
-    
-        
-        
-    #    for x,y in coords:
-    #        for yi in range(len(y0)):
-    #            for xi in range(len(x0)):
-    #                #r2=np.sqrt((x-x0[xi])**2+(y-y0[yi])**2)
-    #                r2=(x-x0)**2+(y-y0)**2
-    #                if r2<r2_max:
-    #                    ri=np.searchsorted(r2_space, r2)
-    #                    accum[ri,yi, xi]+=1
-    #    for y0i,x0i in it.product(y0,x0):
-    #        
-    #        ri=np.searchsorted(r2_space, r2)
-    #        accum[ri, 
-    if return_all:
-        return r2_y_x,(accum, x0,y0,r2_space)
-    else:
-        return r2_y_x
-
-def ndRightJoin(*vectors):
-    '''
-    Right Join a sequence of N vectors into an array of length YxN, 
-    ''' 
-    mesh=np.meshgrid(*vectors, indexing="ij")
-    stacked=[matrix.flatten() for matrix in mesh]
-    return np.column_stack(stacked)
-    
-    return np.reshape(stacked,  (-1,len(vectors)))
-
-def hough_circle_setup():
-    pass
-def hough_circle_work(func, accum, coords, linspace_eq_result, ):
-    pass
-def _update_accumulator(accumulator, additions_np, theta_bins, ro_step,ro_bins):
-    pass
        
 def get_coords(data):
     '''
-    Method to get coordinates of true values in an array.  Uses numpy.indices 
+    Method to get coordinates of nonzero values in an array.  Uses numpy.argwhere 
     to generate index spaces.  Very memory efficient, and should be very fast.
     '''
     return np.argwhere(data)
@@ -478,7 +328,7 @@ def getObjectCenters(mask, labels=None, found_obj=None, structure=np.ones((3, 3,
 
 def getObjectSlices(mask, labels=None, structure=np.ones((3, 3, 3))):
     if labels is None:
-        labels, labelcount = ndimage.label(mask, structure=structure)
+        labels = ndimage.label(mask, structure=structure)
     found_obj = ndimage.find_objects(mask, labels)
     return found_obj
 
@@ -503,18 +353,50 @@ def getLargestSliceIndex(slicelist):
             count += 1
     assert maxvi >= 0, "Max index is not greater than the start index, check slice list for negative values"
     return maxvi
-        
+
+
+## \brief Converts an image into an unsigned integer format from any other format.
+#    \param npdata
+#    \param bitdepth Number of bits to use in the integer. Powers of 2 are acceptable.
+#    \param out Output array. Must be a numpy array of correct dtype and the same shape as input.
+#    \param bandpass Boolean indicating whether the array should be high and low bandpassed.
+#    \param maxVal
+#    \param minVal Minimum value in the data to be used for 
+def rescaleToUnsignedInt(npdata, bitdepth=16, out=None, bandpass=False, minFrac=0.00001, maxFrac=0.99999,
+                         minVal=None, maxVal=None):
     
+    if bandpass:
+        if minVal is None or maxVal is None:
+            sortarg=np.argsort(npdata, axis=None)
+        #Default to 0.001% Boundaries
+        if minVal is None:
+            minVal=findNthGreatestValue(npdata, fraction=1.-minFrac, sort_array=sortarg)
+        if maxVal is None:
+            maxVal=findNthGreatestValue(npdata, fraction=1.-maxFrac, sort_array=sortarg)
+        npdata_bandpass=np.where(npdata<minVal, minVal, npdata)
+        npdata_bandpass=np.where(npdata_bandpass>maxVal, maxVal, npdata_bandpass)
+    else:
+        npdata_bandpass=npdata
+    #Test to see if the dtype is correct   
+    #Make sure the shape is the same and tell the user if it isn't without aborting.
+    
+    
+    #rescale the data to the correct range
+    out=np.asanyarray(
+                      ((npdata_bandpass - minVal) / (maxVal - minVal))\
+                      * (2 ** bitdepth - 1)
+                      , dtype="uint{}".format(bitdepth)
+                      )
+    return out
+        
 def binaryFillHoles(binarydata, kernel=np.ones((3, 3, 3))):
     
     result = np.zeros_like(binarydata)
-    # binary_fill_holes(binarydata, output=result)
     if kernel is None:
         ndimage.binary_fill_holes(binarydata, output=result)
     else:
         ndimage.binary_fill_holes(binarydata, structure=kernel, output=result)
     
-    # binary_fill
     return result
 
 def binaryClosing(binarydata, structure=None, iterations=1):
