@@ -11,18 +11,21 @@
 
 #Needed packages
 import numpy as np
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 
 #Local imports
 import processing,itktest
+from compiler.ast import Pass
 
 
 
-def hough_lines(d2image, d2_iscanny=False, pixel_step_size=1.0, angle_samples=181, ro_samples=200, N_return=5,
+def hough_lines(d2image, d2_iscanny=False, angle_samples=181, ro_samples=200, N_return=5,
                 return_all=False, **kwargs):
     if not d2_iscanny:
         data = itktest.canny_edge_detector(d2image, returnNP=True,  **kwargs)
     else:
-        data = d2image
+        data = np.asanyarray(d2image,dtype="bool8")
     coords=processing.get_coords(data)
     #Number of divisions in 180 degrees to use for angle sampling.
     #Largest value is the hypotenuse of the image dimensions
@@ -38,18 +41,23 @@ def hough_lines(d2image, d2_iscanny=False, pixel_step_size=1.0, angle_samples=18
     #Something to store extra results
     
     #For each coordinate, apply theta equation to calculate ro
-    ro=[]
+    #ro=[]
     #print(theta_ind)
     for x, y in coords:
         #Perform the transform to this space
+        
         ri=x * np.cos(theta) + y * np.sin(theta)
-        ro.append(ri)
+        #ro.append(ri)
         ri_sort=np.searchsorted(rospace, ri)
+        print(x,y, "\t",ri_sort.max(), ri_sort.min())
         #Get the equivalent coordinates for the output
         #Make the 2-D results into 1-D results for easy indexing of the accumulator
         index=np.ravel_multi_index((theta_ind,ri_sort),accum.shape, mode="raise")
         accum_x[index]+=1
     #Index locations where the greatest values are. Returned as numpy arrays of point coordinates
+    plt.figure(1,figsize=(15,15))
+    plt.imshow(accum)
+    
     indices=np.argwhere(
         accum >= processing.findNthGreatestValue(accum, count=N_return)
         )
@@ -60,6 +68,25 @@ def hough_lines(d2image, d2_iscanny=False, pixel_step_size=1.0, angle_samples=18
         return ro_the, (accum,rospace,theta)
     else:
         return ro_the
+
+def drawLinesOnImage(d2img, ro_theta):
+    fig=plt.figure(figsize=(20,20),dpi=101)
+    ax=fig.add_axes([0.15, 0.1, 0.7, 0.7])
+    ax.imshow(d2img)
+    print(d2img.shape)
+    ax.set_clip_box(mpl.transforms.Bbox([[0,0],[d2img.shape[1],d2img.shape[0]]]))
+    ax.set_clip_on(True)
+    ax.set_autoscale_on(False)
+    ax.set_ybound(lower=0,upper=d2img.shape[0])
+    x=np.arange(0.0, 218., 0.5)
+    line=[]
+    for r,th in ro_theta:
+        print(th,r)
+        if th != 0.0 and th != np.pi:
+            y=(r-x*np.cos(th))/np.sin(th)
+            line.append(ax.plot(x,y,'g-'))
+    xtext=ax.set_xlabel("X axis")
+    ytext=ax.set_ylabel("Y axis")
 
 ##\brief Finds circles in an image.
 #  \param d2image A 2-dimensional numpy image array. This function runs faster if the image is already the
@@ -139,3 +166,14 @@ def hough_circle_setup():
     pass
 def hough_circle_work(func, accum, coords, linspace_eq_result, ):
     pass
+
+def unit_test():
+    testimg=np.zeros((1000,1000),dtype="int8")
+    for i in range(1000):
+        testimg[i,i]=1
+        testimg[i,-i]=1
+    ro_the=hough_lines(testimg,d2_iscanny=True)
+    drawLinesOnImage(testimg, ro_the)
+
+if __name__=='__main__':
+    unit_test()

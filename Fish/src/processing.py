@@ -615,7 +615,7 @@ def get_coordinates_py(image, maxdepth=0, depth=0):
             sublist.append([i, get_coordinates_py(image[i], maxdepth=maxdepth, depth=depth + 1)])
     return right_join_py(sublist)
 """
-def right_join(nestedList, two_list=False):
+def right_join(nestedList, two_list=False ):
     '''
     Joins a nested list of length N, with subarrays of length M into an NxM format.
     two_list indicates whether it should join two lists instead of a nested list
@@ -640,15 +640,20 @@ def right_join(nestedList, two_list=False):
             c1[:] = listi[0]
             result.append(np.column_stack((c1, c2)))
     if two_list:
-        List1=np.asarray(nestedList[0])
-        col2=np.asarray(nestedList[1])
+        print(nestedList)
+        #Left is the left side. Repeats elements to fill spaces needed for second array
+        left=np.asanyarray(nestedList[0])
+        assert np.ndim(left)==1, "Too many dimensions in left array"
+        if len(nestedList)>2:
+            right=right_join(nestedList[1::],two_list=True)
+        else:
+            right=np.asanyarray(nestedList[1])
         
-        for i in List1:
-            #c2 = listi[1])
-            col1 = np.zeros((c2.shape[0],))
-            col1[:] = listi[0]
-        result.append(np.column_stack((col1, col2)))
-    return np.concatenate(result)
+        for i in range(len(left)):
+            col1 = np.zeros((right.shape[0],))
+            col1[:] = left[i]
+            result.append(np.column_stack((col1, right)))
+    return np.row_stack(result)
 
 def get_coordinates(image, maxdepth=0, depth=0):
     '''

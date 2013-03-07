@@ -423,14 +423,17 @@ def packer(array, endian="<", datatype="f"):
     bindata=struct.pack(endian+datatype*siz, *((array.flatten()).tolist()))
     return bindata
 
+##\brief Writes the volume to file, automatically naming and storing in a location.
 def writeVolumeToFile(npdata, basename, resolution, outputfiledir="/scratch/", fill_label=""):
     """
-    \brief Writes the volume to file, automatically naming and storing in a location.
+    Writes the volume to file, automatically naming and storing in a location.
+    
+    File name format as follows:
+    {basename}_x{shape[2]}_y{shape[1]}_z{shape[0]}_{fill}_{resolution}um.raw
     """
 
     sh=npdata.shape
     sh=[i for i in sh[::-1]]
-    #outputfiledir="/scratch/"
     outputfilename="{basename}_x{}_y{}_z{}_{fill}_{res}um.raw".format(sh[0],sh[1],sh[2],npdata.dtype,basename=basename, res=resolution, fill=fill_label)
     print(outputfilename)
     output=os.path.join(outputfiledir, outputfilename)
