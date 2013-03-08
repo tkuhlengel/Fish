@@ -1,9 +1,10 @@
 #!/usr/bin/python3
-
-## \package processing
+## \file processing
 # Created on Oct 17, 2012
 #
-# \author: Trevor Kuhlengel
+# \author Trevor Kuhlengel
+# \copyright Copyright 2012,2013 Penn State University. All rights reserved.
+# \license This project is released under the GNU Public License
 
 import sys
 import itertools as it

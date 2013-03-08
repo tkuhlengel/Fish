@@ -1,28 +1,25 @@
-'''
+#!/usr/bin/python
+## \flie fish
+# \brief Class for storing CT data file and relevant image data
+# \copyright Copyright (C) 2013 Penn State University
+# \author Trevor Kuhlengel
+# 
+#\license
+#This program is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 3 of the License, or
+#(at your option) any later version.
+#
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+#
+#You should have received a copy of the GNU General Public License
+#along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-Class for storing CT data file and relevant imagedata
-Copyright (C) 2013 Trevor Kuhlengel
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-Created on Oct 4, 2012
-
-Step1: Descriptive Statistics 
-    scipy.ndimage.measurements: center_of_mass()
-    Scipy.ndimage.measurements: extrema(input)
-\author Trevor Kuhlengel
-'''
-import numpy as np, scipy as sp
+import numpy as np
+import scipy as sp
 #import teem
 #Local Imports
 import main

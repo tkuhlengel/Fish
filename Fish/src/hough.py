@@ -1,24 +1,34 @@
 #!/usr/bin/python
-##
-# \file hough.py
-# \package src
-# \ingroup image
-#
+## \file hough
+# \package processing
+# \brief Functions for performing a Hough transform on Numpy data, which is a way to extract lines from an image.
 # \date 2013
 #
 # \author Trevor Kuhlengel <tkuhlengel@gmail.com>
-## \brief Performs a 2D line detection
+# \copyright (C) 2013 Penn State University
+# \license This project is released under the GNU Public License
+#
 
 #Needed packages
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+#from pylab import figure,imshow,show
+
 
 #Local imports
 import processing,itktest
-from compiler.ast import Pass
 
 
+##\brief Finds the lines in an image.
+# \param d2image A 2D numpy array containing image data or binary edge data.
+# \param d2_iscanny Boolean indicating whether the image in d2image has had
+#    canny edge detection performed on it.
+# \param angle_samples The number of samples to use for the angle space. More results in better resolution. 
+#      Default is equivalent to the number of degrees+1. The greater the value the more precise the lines will be.  
+# \param ro_samples Number of samples to use for the ro parameter, which is the output of the test function.
+# \param N_return Number of candidate results to return in the first argument.
+# \param return_all Return the accumulator, bins of values for ro and theta in addition to the top candidates.
 
 def hough_lines(d2image, d2_iscanny=False, angle_samples=181, ro_samples=200, N_return=5,
                 return_all=False, **kwargs):
@@ -32,27 +42,23 @@ def hough_lines(d2image, d2_iscanny=False, angle_samples=181, ro_samples=200, N_
     romax = np.sqrt(float(data.shape[0] ** 2 + data.shape[1] ** 2))
     #The evenly spaced bins of RO and theta
     rospace=np.linspace(0.0, romax,    num=ro_samples,    endpoint=False, retstep=False)
-    theta = np.linspace(0.0, np.pi/2., num=angle_samples, endpoint=False, retstep=False)
+    theta = np.linspace(0.0, np.pi/2., num=angle_samples, endpoint=True, retstep=False)
     theta_ind=np.arange(0,len(theta),dtype="uint16")
     
     #Generate the accumulator space. X axis
-    accum = np.zeros(( len(theta),len(rospace)), dtype="uint32")
+    accum = np.zeros(( len(theta),len(rospace)+1), dtype="uint32")
     accum_x=np.ravel(accum)
     #Something to store extra results
     
-    
-    #ro=[]
-    #print(theta_ind)
     for (x, y) in  coords:
         #Perform the transform to this space
         #For each coordinate, apply theta equation to calculate ro
         ri=x * np.cos(theta) + y * np.sin(theta)
-        #ro.append(ri)
         ri_sort=np.searchsorted(rospace, ri)
         
         if ri_sort.max()>(ro_samples-1):
             print("Wat")
-        print(x,y, "    ",ri_sort.max(), ri_sort.min())
+        # print(x,y, "    ",ri_sort.max(), ri_sort.min())
         #Get the equivalent coordinates for the output
         #Make the 2-D results into 1-D results for easy indexing of the accumulator
         index=np.ravel_multi_index((theta_ind,ri_sort),accum.shape, mode="raise")
@@ -60,9 +66,9 @@ def hough_lines(d2image, d2_iscanny=False, angle_samples=181, ro_samples=200, N_
     #Index locations where the greatest values are. Returned as numpy arrays of point coordinates
     plt.figure(1,figsize=(15,15))
     plt.imshow(accum)
-    
+    peakVal=processing.findNthGreatestValue(accum, count=N_return)
     indices=np.argwhere(
-        accum >= processing.findNthGreatestValue(accum, count=N_return)
+        accum >= peakVal
         )
     
     ro_the=np.column_stack((rospace[indices[:,1]],theta[indices[:,0]]))
@@ -72,16 +78,16 @@ def hough_lines(d2image, d2_iscanny=False, angle_samples=181, ro_samples=200, N_
     else:
         return ro_the
 
-def drawLinesOnImage(d2img, ro_theta):
-    fig=plt.figure(figsize=(20,20),dpi=101)
-    ax=fig.add_axes([0.15, 0.1, 0.7, 0.7])
+def drawLinesOnImage(d2img, ro_theta, figure=None):
+    if figure is None:
+        figure=plt.figure(figsize=(20,20),dpi=101)
+    ax=figure.add_subplot(111)#[0.15, 0.1, 0.7, 0.7])
     ax.imshow(d2img)
-    print(d2img.shape)
     ax.set_clip_box(mpl.transforms.Bbox([[0,0],[d2img.shape[1],d2img.shape[0]]]))
     ax.set_clip_on(True)
     ax.set_autoscale_on(False)
     ax.set_ybound(lower=0,upper=d2img.shape[0])
-    x=np.arange(0.0, 218., 0.5)
+    x=np.arange(0.0, d2img.shape[1], 0.5)
     line=[]
     for r,th in ro_theta:
         print(th,r)
@@ -90,6 +96,7 @@ def drawLinesOnImage(d2img, ro_theta):
             line.append(ax.plot(x,y,'g-'))
     xtext=ax.set_xlabel("X axis")
     ytext=ax.set_ylabel("Y axis")
+    plt.show()
 
 ##\brief Finds circles in an image.
 #  \param d2image A 2-dimensional numpy image array. This function runs faster if the image is already the

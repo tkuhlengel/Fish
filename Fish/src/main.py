@@ -1,7 +1,12 @@
 #!/usr/bin/python2.7
+## \file main
+# \brief Entry point into the Fish manipulation program. Primary file for importing and exporting data files.
+# \copyright (C) 2013 Trevor Kuhlengel, Penn State University
+# \license This project is released under the GNU Public License
+
 '''
-Entry point into the Fish manipulation program
-Copyright (C) 2013 Trevor Kuhlengel
+
+
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -72,18 +77,28 @@ import string
 import gzip
 
 
+##   \brief Basic data loader. Automatically Loads .raw files, .nrrd files and .nhdr lists, and processes headers.
+#    \param filename a string or list of filenames. If not sorted in order,
+#         the filenames will be sorted by default in alphabetical order.
+#    \param dtype The expected data type in the file. .nrrd Headers will 
+#        automatically be used 
+#    \param endian Specify the endianness of the data. Little will be assumed
+#        if this parameter is None.
+#    \param sort If filename is a list of files, if sort is True, the filenames
+#    \return Tuple containing the header data as a dictionary and a numpy array
+        containing the file data.  The header may be empty for raw files.
 def unpacker(filename, dtype=None, endian=None, sort=True, hdrstring=False):
     '''
     Basic Data Loader. Automatically Loads .raw files, .nrrd files and 
         .nhdr lists, and processes headers.
     @param filename: a string or list of filenames. If not sorted in order,
          the filenames will be sorted by default in alphabetical order.
-    @param dtype: The expected data type in the file. .nrrd Headers will 
+    @param dtype The expected data type in the file. .nrrd Headers will 
         automatically be used 
-    @param endian: Specify the endianness of the data. Little will be assumed
+    @param endian Specify the endianness of the data. Little will be assumed
         if this parameter is None.
-    @param sort: If filename is a list of files, if sort is True, the filenames
-    @return: Tuple containing the header data as a dictionary and a numpy array
+    @param sort If filename is a list of files, if sort is True, the filenames
+    @return Tuple containing the header data as a dictionary and a numpy array
         containing the file data.  The header may be empty for raw files.
     '''
     path=os.getcwd()
@@ -116,17 +131,14 @@ def unpacker(filename, dtype=None, endian=None, sort=True, hdrstring=False):
             print("Dsize = {}".format(shape))
             print("Size = {}".format(npd.shape))
             npd=npd.reshape([i for i in shape[::-1]])
-            #npd=npd.reshape([i for i in shape].reverse())
             print(npd.shape)
         if hdrstring:
             return header,npd, None
-    #except Exception as exc:
-    #    print("Error Occurred")
-    #    raise exc
     finally:
         os.chdir(path)
     return header,npd
 
+##\brief Load a file and return the binary string representing the data.
 def loadFile(pathname, mode='rb', buffersize=(1024*1024*64)):
     '''
     Loads a file and returns the binary string representing the data
@@ -142,9 +154,8 @@ def loadFile(pathname, mode='rb', buffersize=(1024*1024*64)):
         fobj=open(os.path.abspath(pathname), mode);
         data=fobj.read();
         fobj.close();
-    
-        
     return data;
+
 def parseExtension(strFileName):
     if ".nrrd" in strFileName:
         return ".nrrd"
@@ -194,6 +205,7 @@ def processNrrd(rawbinary, returnRawHeader=False):
     #Implicit else
     return header, raw
 
+## \brief Splits a .nrrd file into the header data and the binary data if available.
 def splitNrrdData(raw):
     '''
     @summary: Splits a .nrrd file into the header data and the binary data if available.
@@ -217,6 +229,9 @@ def splitNrrdData(raw):
     
     return rawhdr,hdrparts,data
 
+# \brief Splits out the header components into a dictionary that can be used by other parts of the program
+# \param header a raw string containing only the header information from a nrrd, or the
+#      entirety of an NHDR file.
 def processNhdrHeader(header):
     """ 
     @brief Splits out the header components into a dictionary that can be used by other parts of the program
@@ -234,8 +249,6 @@ def processNhdrHeader(header):
         if line.startswith("#") or len(line)==0:
             continue
         x=re.split(r": ", line)
-        #print(x)
-        #print(hparts)
         counter+=1
         try:
             hparts[x[0]]=x[1]
@@ -246,7 +259,6 @@ def processNhdrHeader(header):
         dsize=hparts["sizes"].split(" ")
         dsize2=[string.atoi(i) for i in dsize] #Convert the string to an integer
         hparts["dsize"]=dsize2
-        #print(hparts["dsize"])
     if "type" in hparts:
         x=hparts["type"]
         if "float" in x:
@@ -266,16 +278,10 @@ def processNhdrHeader(header):
         elif "short" in x:
             out="int16"
         else:
-            print("Unknown raw type encountered, assuming float32")
-            print(header)
+            sys.stderr.write("Unknown raw type encountered, assuming float32\n\n{}".format(header))
             out="float32"
         hparts["dtype"]=out
-            
-            
     return hparts
-
-    
-
     
 def getDimFromFile(filname):
     '''
