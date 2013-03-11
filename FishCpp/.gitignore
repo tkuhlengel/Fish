@@ -3,5 +3,6 @@ bin
 Debug
 src/CMakeFiles
 src/ITKIOFactoryRegistration
+src/CmakeLists.txt
 cmake*
 .settings

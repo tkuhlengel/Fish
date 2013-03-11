@@ -26,7 +26,7 @@
 								<option id="gnu.cpp.compiler.option.include.paths.1608442740" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="/usr/include/ITK-4.3"/>
 								</option>
-								<option id="gnu.cpp.compiler.option.other.verbose.444631928" superClass="gnu.cpp.compiler.option.other.verbose" value="true" valueType="boolean"/>
+								<option id="gnu.cpp.compiler.option.other.verbose.444631928" name="Verbose (-v)" superClass="gnu.cpp.compiler.option.other.verbose" value="true" valueType="boolean"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1722637449" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.1439213971" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.debug">
@@ -35,7 +35,7 @@
 								<option id="gnu.c.compiler.option.include.paths.1784854274" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="/usr/include/ITK-4.2"/>
 								</option>
-								<option id="gnu.c.compiler.option.misc.verbose.1462059631" superClass="gnu.c.compiler.option.misc.verbose" value="true" valueType="boolean"/>
+								<option id="gnu.c.compiler.option.misc.verbose.1462059631" name="Verbose (-v)" superClass="gnu.c.compiler.option.misc.verbose" value="true" valueType="boolean"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.2011117765" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.exe.debug.1967224564" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.exe.debug"/>
