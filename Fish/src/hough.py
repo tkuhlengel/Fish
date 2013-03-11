@@ -1,6 +1,6 @@
 #!/usr/bin/python
 ## \file hough
-# \package processing
+# \addtogroup scipy
 # \brief Functions for performing a Hough transform on Numpy data, which is a way to extract lines from an image.
 # \date 2013
 #
@@ -78,6 +78,7 @@ def hough_lines(d2image, d2_iscanny=False, angle_samples=181, ro_samples=200, N_
     else:
         return ro_the
 
+## \brief Draw the image with the candidate lines drawn on it.
 def drawLinesOnImage(d2img, ro_theta, figure=None):
     if figure is None:
         figure=plt.figure(figsize=(20,20),dpi=101)

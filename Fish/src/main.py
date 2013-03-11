@@ -1,6 +1,7 @@
 #!/usr/bin/python2.7
 ## \file main
 # \brief Entry point into the Fish manipulation program. Primary file for importing and exporting data files.
+# \defgroup scipy "SciPy packages"
 # \copyright (C) 2013 Trevor Kuhlengel, Penn State University
 # \license This project is released under the GNU Public License
 
@@ -86,7 +87,7 @@ import gzip
 #        if this parameter is None.
 #    \param sort If filename is a list of files, if sort is True, the filenames
 #    \return Tuple containing the header data as a dictionary and a numpy array
-        containing the file data.  The header may be empty for raw files.
+#        containing the file data.  The header may be empty for raw files.
 def unpacker(filename, dtype=None, endian=None, sort=True, hdrstring=False):
     '''
     Basic Data Loader. Automatically Loads .raw files, .nrrd files and 

@@ -1,18 +1,23 @@
 #!/usr/bin/python2.7
 
 ## \brief Module implementing ITK tools.
+#  \file itktest
+#  \defgroup itk "Modules using ITK"
 #Created on Jan 30, 2012
 #
 #\author Trevor Kuhlengel
-
-
+from __future__ import print_function
+import os
 import SimpleITK as si
 import numpy as np
+
 
 #===============================================================================
 # Decorators
 #===============================================================================
 
+## \brief Transparently converts the first argument in a decorated function into an ITKImage class.
+# \addtogroup itk
 def temporaryITK(fn):
     def wrapper(arg1, *args, **kwargs):
         if type(arg1)==np.ndarray:
@@ -36,7 +41,7 @@ def npFloatInput(fn):
         return fn(modinput,*args, **kwargs)
     return wrapper
 
-## \brief Converts the return value
+## \brief Converts the return value into a boolean NumPy array.
 def npBoolReturn(fn):
     def wrapper(*args, **kwargs):
 
@@ -59,10 +64,24 @@ def readFile(filename):
     reader.SetFileName(filename)
     return reader.Execute()
 
+## \brief Show the 3D image in an external viewer, allowing complete vision of the object.
+def showITKImage(inputImage):
+    if ( not "SITK_NOSHOW" in os.environ ):
+        si.Show( inputImage )
+
 @npBoolReturn
 @npFloatInput
 @temporaryITK
-def canny_edge_detector(volume, returnNP=False, **kwargs):
+## \brief     Performs canny edge detection on the input. Returns a numpy array
+#    \param returnNP indicates whether the return type should be a NumPy volume.
+#     If false, returns a simpleITK image. 
+#    \param inLowerThreshold The lower threshold from the sobel filter to contain an edge. Default 0.0 
+#    \param inUpperThreshold Upper threshold from the sobel filter to mark as an edge. Default 0.0 
+#    \param inVariance  Variance to use on the gaussian blurring before the edge filter. Default [0.0, 0.0, 0.0]
+#    \param VectorDouble inMaximumError = std::vector< double >(3, 0.01)
+#        ) -> Image
+def canny_edge_detector(volume, returnNP=False, inLowerThreshold=0.0, inUpperThreshold=0.0,
+                            inVariance=[0.0,0.0,0.0], inMaximumError=[0.01,0.01,0.01] ):
     '''
     Performs canny edge detection on the input.
     
@@ -70,11 +89,11 @@ def canny_edge_detector(volume, returnNP=False, **kwargs):
      If false, returns a simpleITK image. 
      
     Options:
-    CannyEdgeDetection(Image image1, 
+    SimpleITK.CannyEdgeDetection(Image image1, 
     @keyword inLowerThreshold=0.0 The lower threshold from the sobel filter to contain an edge.
     @keyword inUpperThreshold=0.0 Upper threshold from the sobel filter to mark as an edge 
     @keyword inVariance=std::vector< double >(3, 0.0), 
-    VectorDouble inMaximumError=std::vector< double >(3, 0.01)) -> Image
+    @keyword VectorDouble inMaximumError=std::vector< double >(3, 0.01)) -> Image
     '''
     
       
@@ -91,7 +110,7 @@ def canny_edge_detector(volume, returnNP=False, **kwargs):
     canny_edges_volume=si.CannyEdgeDetection(itk_volume, **kwargs)
     
     if returnNP:
-        return si.GetArrayFromImage(canny_edges_volume)
+        return np.asanyarray(si.GetArrayFromImage(canny_edges_volume),dtype="bool8")
     
     return canny_edges_volume 
 
@@ -104,5 +123,6 @@ if __name__=='__main__':
     hparts,npdata=main.unpacker(testfish,hdrstring=False)
     npdata=npdata.reshape(hparts["dsize"][::-1])
     canny_edge_detector(npdata, returnNP=True)
+    canny_
     
     
