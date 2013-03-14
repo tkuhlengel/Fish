@@ -539,7 +539,7 @@ def linewise(image, threshold=0.5):
     return x.reshape(image.shape)
 
 
-def right_join(list_group, sublists=False ):
+def right_join(list_group, sublists=False ,dtype=None):
     '''
     Joins a nested list of length N, with subarrays of length M into an NxM format.
     sublists indicates whether the list_group contains lists more than 1 layer deep. 
@@ -549,6 +549,12 @@ def right_join(list_group, sublists=False ):
     result = []  # np.array((100,3), dtype="float32")
     #define the columns
     #np.ndarray c1, c2
+    if type(list_group[0]) == np.ndarray:
+        #print("True")
+        dtype=list_group[0].dtype
+    else:
+        dtype="float32"
+        #print("False")
     if sublists:
         for listi in list_group:
             try:
@@ -561,24 +567,37 @@ def right_join(list_group, sublists=False ):
                 #print(exc)
                 pass
                 
-            c2 = np.asarray(listi[1])
-            c1 = np.zeros((c2.shape[0],))
+            c2 = np.asarray(listi[1], dtype=dtype)
+            c1 = np.zeros((c2.shape[0],),dtype=dtype)
             c1[:] = listi[0]
             result.append(np.column_stack((c1, c2)))
     else:
-        print(list_group)
+        if dtype is not None:
+            pass
+        
+        elif type(list_group[0]) == np.ndarray:
+            #print("True")
+            dtype=list_group[0].dtype
+        else:
+            dtype="float32"
+            #print("False")
+        #print(dtype)
+        #print(list_group)
         #Left is the left side. Repeats elements to fill spaces needed for second array
-        left=np.asanyarray(list_group[0])
+        left=np.asanyarray(list_group[0],dtype=dtype)
+        #print("LEFT = ",left.dtype)
         assert np.ndim(left)==1, "Too many dimensions in left array"
         if len(list_group)>2:
             right=right_join(list_group[1::],sublists=sublists)
         else:
-            right=np.asanyarray(list_group[1])
+            right=np.asanyarray(list_group[1], dtype=dtype)
         
+        #print("RIGHT = ",right.dtype)
         for i in range(len(left)):
-            col1 = np.zeros((right.shape[0],))
+            col1 = np.zeros((right.shape[0],), dtype=dtype)
             col1[:] = left[i]
             result.append(np.column_stack((col1, right)))
+            
     return np.row_stack(result)
 
 def get_coordinates(image, maxdepth=0, depth=0):

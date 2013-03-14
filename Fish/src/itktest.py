@@ -80,8 +80,8 @@ def showITKImage(inputImage):
 #    \param inVariance  Variance to use on the gaussian blurring before the edge filter. Default [0.0, 0.0, 0.0]
 #    \param VectorDouble inMaximumError = std::vector< double >(3, 0.01)
 #        ) -> Image
-def canny_edge_detector(volume, returnNP=False, inLowerThreshold=0.0, inUpperThreshold=0.0,
-                            inVariance=[0.0,0.0,0.0], inMaximumError=[0.01,0.01,0.01] ):
+def canny_edge_detector(volume, returnNP=False, **kwargs):
+        #inLowerThreshold=0.0, inUpperThreshold=0.0, inVariance=[0.0,0.0,0.0], inMaximumError=[0.01,0.01,0.01] ):
     '''
     Performs canny edge detection on the input.
     

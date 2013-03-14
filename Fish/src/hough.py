@@ -15,6 +15,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 #from pylab import figure,imshow,show
 
+from numpy.lib import scimath #Used in add circle to image
 
 #Local imports
 import processing,itktest
@@ -98,6 +99,28 @@ def drawLinesOnImage(d2img, ro_theta, figure=None):
     xtext=ax.set_xlabel("X axis")
     ytext=ax.set_ylabel("Y axis")
     plt.show()
+    
+def drawCirclesOnImage(d2img, r2_y_x):
+    fig=plt.figure(figsize=(20,20),dpi=101)
+    ax=fig.add_axes([0.15, 0.1, 0.7, 0.7])
+    ax.imshow(d2img)
+    #print(d2img.shape)
+    ax.set_clip_box(mpl.transforms.Bbox([[0,0],[d2img.shape[1],d2img.shape[0]]]))
+    ax.set_clip_on(True)
+    ax.set_autoscale_on(False)
+    ax.set_ybound(lower=0,upper=d2img.shape[0])
+    x=np.arange(0.0, 218., 0.5)
+    line=[]
+    for r2,y,x in r2_y_x:
+        #print(th,r)
+        #if th != 0.0 and th != np.pi:
+        circle=plt.Circle((x,y),radius=r2, fill=False)
+        fig.gca().add_artist(circle)
+            #y=(r-x*np.cos(th))/np.sin(th)
+            #line.append(ax.plot(x,y,'g-'))
+    xtext=ax.set_xlabel("X axis")
+    ytext=ax.set_ylabel("Y axis")
+    fig.show()
 
 ##\brief Finds circles in an image.
 #  \param d2image A 2-dimensional numpy image array. This function runs faster if the image is already the
@@ -118,23 +141,23 @@ def hough_circles(d2image, d2_iscanny=False, radius_samples=200, xy_samples=[200
     coords = processing.get_coords(data)
     #We're going to assume that Radius is less than the hypotenuse of the image 
     #This is convenient, because it only allows for circles completely contained in the image
-    r_max= np.sqrt(float(data.shape[0] ** 2 + data.shape[1] ** 2))
+    r_max= np.sqrt(np.float32(np.square(data.shape[0]) + np.square(data.shape[1])))
     x0=np.linspace(0.0, d2image.shape[1], num=xy_samples[0], endpoint=False, retstep=False)
     y0=np.linspace(0.0, d2image.shape[0], num=xy_samples[1], endpoint=False, retstep=False)
     r2_space=np.square(np.linspace(0.0,r_max, num=radius_samples, endpoint=False))
-    #r2_space=np.linspace(0.0,r_max, gridsize, endpoint=True)
+    r_space=np.linspace(0.0,r_max, num=radius_samples, endpoint=True)
     
     #Create a list of index arrays
     x0_ind=np.arange(0, len(x0), dtype="uint16")
     y0_ind=np.arange(0, len(y0), dtype="uint16")
     r2_ind=np.arange(0, len(r2_space),dtype="uint16")
 
-    accum=np.zeros((len(r2_space),len(y0),len(x0)),dtype="uint32")
+    accum=np.zeros((len(r2_space)+1,len(y0),len(x0)),dtype="uint32")
     #Create a 1-D view
     accum_x=np.ravel(accum)
     
-    xy=processing.right_join(x0,y0)
-    xy_ind=processing.right_join((x0_ind, y0_ind),two_list=True)
+    xy=processing.right_join((x0,y0),sublists=False)
+    xy_ind=processing.right_join((x0_ind, y0_ind),sublists=False)
     
     #Choosing to split them for the equation
     x0_eq,y0_eq=xy[:,0], xy[:,1]
@@ -144,7 +167,7 @@ def hough_circles(d2image, d2_iscanny=False, radius_samples=200, xy_samples=[200
     
     for x, y in coords:
         #Perform the transform to this space
-        r2=(x-x0_eq)**2+(y-y0_eq)**2
+        r2=np.square(x-x0_eq)+np.square(y-y0_eq)
         r2_sort=np.searchsorted(r2_space,r2)
         #Get the equivalent coordinates for the output
         #Make the 2-D results into 1-D results for easy indexing of the accumulator
@@ -154,7 +177,7 @@ def hough_circles(d2image, d2_iscanny=False, radius_samples=200, xy_samples=[200
     indices=np.argwhere(
         accum >= processing.findNthGreatestValue(accum, count=N_return)
         )
-    r2_y_x=np.column_stack((r2_space[indices[:,0]],y0[indices[:,1],x0[indices[:,2]]]))
+    r2_y_x=np.column_stack((np.sqrt(r2_space[indices[:,0]]),y0[indices[:,1],x0[indices[:,2]]]))
     
         
         
@@ -162,6 +185,45 @@ def hough_circles(d2image, d2_iscanny=False, radius_samples=200, xy_samples=[200
         return r2_y_x,(accum, x0,y0,r2_space)
     else:
         return r2_y_x
+
+def addCircleToImage(image, radius, center, edge_value=1, fill=False, fill_value=1 ):
+
+    image=np.zeros((800,1000),dtype="int8")
+    if len(center)!=2:
+        raise Exception("Center must be specified, with the same number of dimensions as the image")
+    else:
+        y0=center[0]
+        x0=center[1]
+        r=radius
+    
+    
+    #counter=0
+    for x in range(image.shape[-1]):
+        m=scimath.sqrt(np.square(r) - np.square(x - x0))
+        if np.imag(m) == 0 and m < image.shape[0]:
+            #Since this is a sqrt, there are two values.
+            y1=y0 + m 
+            #Y2 Should always be smaller in value than Y1
+            y2= y0 - m
+            
+            
+            if fill:
+                if 0<y2<image.shape[0]:
+                    y2fill=np.rint(y2)
+                else:
+                    y2fill=np.rint(0)
+                if 0<y1<image.shape[0]:
+                    y1fill=np.rint(y1)
+                else:
+                    y1fill=np.rint(image.shape[0]-1)
+                    
+                image[y2fill:y1fill,x]=fill_value
+            #Color the edges
+            if y1<image.shape[0]:
+                image[y1,x]=edge_value
+            if y2<image.shape[0]:
+                image[y2,x]=edge_value
+    return image
 
 def ndRightJoin(*vectors):
     '''
@@ -185,6 +247,10 @@ def unit_test():
         testimg[i,-i]=1
     ro_the=hough_lines(testimg,d2_iscanny=True)
     drawLinesOnImage(testimg, ro_the)
+    circ=np.zeros((1000,1000),dtype="int8")
+    circ=addCircleToImage(circ, 250, [500,500], fill = False)
+    r2_y_x=hough_circles(np.asanyarray(circ, dtype="bool8"), d2_iscanny=True, radius_samples=200, xy_samples=[100,100], N_return=1, return_all=False)
+    drawCirclesOnImage(circ, r2_y_x)
 
 if __name__=='__main__':
     unit_test()
